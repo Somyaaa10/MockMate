@@ -1,3 +1,5 @@
+const asyncHandler = require("../utils/asyncHandler");
+const ApiResponse = require("../utils/ApiResponse");
 const authService = require("../services/auth.service");
 
 // register controller
@@ -62,7 +64,27 @@ const login = async (req, res) => {
   }
 };
 
+// get me
+const getMe = asyncHandler(async (req, res) => {
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        id: req.user._id,
+        fullName: req.user.fullName,
+        email: req.user.email,
+        role: req.user.role,
+        profileImage: req.user.profileImage,
+        isPremium: req.user.isPremium,
+        isVerified: req.user.isVerified,
+      },
+      "User profile fetched successfully",
+    ),
+  );
+});
+
 module.exports = {
   register,
   login,
+  getMe,
 };
