@@ -6,6 +6,8 @@ const compression = require("compression");
 const cookieParser = require("cookie-parser");
 
 const authRoutes = require("./routes/auth.routes");
+const resumeRoutes = require("./routes/resume.routes");
+const aiRoutes = require("./routes/ai.routes");
 
 const app = express();
 
@@ -20,6 +22,8 @@ app.use(cookieParser());
 
 // routes
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/resumes", resumeRoutes);
+app.use("/api/v1/ai", aiRoutes);
 
 // Health check route
 app.get("/api/v1/health", (req, res) => {
