@@ -9,7 +9,49 @@ const createInterview = async ({
   difficulty,
   numberOfQuestions,
 }) => {
-  // 1. Find resume and verify ownership
+  // 1. Validate required fields
+  if (!resumeId) {
+    throw new Error("Resume is required");
+  }
+
+  if (!interviewType) {
+    throw new Error("Interview type is required");
+  }
+
+  if (!difficulty) {
+    throw new Error("Difficulty is required");
+  }
+
+  if (!numberOfQuestions) {
+    throw new Error("Number of questions is required");
+  }
+
+  // 2. Validate interview type
+  const allowedTypes = ["technical", "hr", "behavioral", "mixed"];
+
+  if (!allowedTypes.includes(interviewType)) {
+    throw new Error("Invalid interview type");
+  }
+
+  // 3. Validate difficulty
+  const allowedDifficulties = ["easy", "medium", "hard"];
+
+  if (!allowedDifficulties.includes(difficulty)) {
+    throw new Error("Invalid difficulty");
+  }
+
+  // 4. Validate question count
+  const questionCount = Number(numberOfQuestions);
+
+  if (
+    !Number.isInteger(questionCount) ||
+    questionCount < 1 ||
+    questionCount > 20
+  ) {
+    throw new Error("Number of questions must be between 1 and 20");
+  }
+
+  // 5. Find resume and verify ownership
   const resume = await Resume.findOne({
     _id: resumeId,
     user: userId,
@@ -23,27 +65,45 @@ const createInterview = async ({
     throw new Error("Resume text is not available");
   }
 
-  // 2. Generate questions using Gemini
+  // 6. Generate questions using Gemini
   const questions = await aiService.generateInterviewQuestions({
     resumeText: resume.extractedText,
     interviewType,
     difficulty,
-    numberOfQuestions,
+    numberOfQuestions: questionCount,
   });
 
-  // 3. Create interview
+  // 7. Validate Gemini response
+  if (
+    !questions ||
+    !Array.isArray(questions) ||
+    questions.length !== questionCount
+  ) {
+    throw new Error("Failed to generate the requested number of questions");
+  }
+
+  // 8. Create interview
   const interview = await Interview.create({
     user: userId,
     resume: resumeId,
     interviewType,
     difficulty,
-    numberOfQuestions,
+    numberOfQuestions: questionCount,
+
     questions: questions.map((question) => ({
       question,
     })),
   });
 
-  return interview;
+  // 9. Return clean response
+
+  return {
+    interviewId: interview._id,
+    interviewType: interview.interviewType,
+    difficulty: interview.difficulty,
+    numberOfQuestions: interview.numberOfQuestions,
+    status: interview.status,
+  };
 };
 
 // start interview
@@ -239,10 +299,53 @@ const getUserInterviews = async (userId) => {
   return interviews;
 };
 
+const getInterviewReport = async (interviewId, userId) => {
+  const interview = await Interview.findOne({
+    _id: interviewId,
+    user: userId,
+  }).populate("resume", "fileName");
+
+  if (!interview) {
+    throw new Error("Interview not found");
+  }
+
+  if (interview.status !== "completed") {
+    throw new Error("Interview report is available only after completion");
+  }
+
+  return {
+    interviewId: interview._id,
+    resume: interview.resume,
+    interviewType: interview.interviewType,
+    difficulty: interview.difficulty,
+    numberOfQuestions: interview.numberOfQuestions,
+
+    overallScore: interview.overallScore,
+
+    technicalScore: interview.finalFeedback?.technicalScore ?? null,
+
+    communicationScore: interview.finalFeedback?.communicationScore ?? null,
+
+    summary: interview.finalFeedback?.summary ?? "",
+
+    strengths: interview.finalFeedback?.strengths ?? [],
+
+    weaknesses: interview.finalFeedback?.weaknesses ?? [],
+
+    recommendations: interview.finalFeedback?.recommendations ?? [],
+
+    questions: interview.questions,
+
+    startedAt: interview.startedAt,
+    completedAt: interview.completedAt,
+  };
+};
+
 module.exports = {
   createInterview,
   startInterview,
   submitAnswer,
   getInterviewById,
   getUserInterviews,
+  getInterviewReport,
 };

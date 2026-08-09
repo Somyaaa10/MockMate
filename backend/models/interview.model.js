@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 
+// Question Schema
 const questionSchema = new mongoose.Schema(
   {
     question: {
@@ -19,36 +20,9 @@ const questionSchema = new mongoose.Schema(
       default: null,
     },
 
-    finalFeedback: {
-      summary: {
-        type: String,
-        default: "",
-      },
-
-      technicalScore: {
-        type: Number,
-        default: null,
-      },
-
-      communicationScore: {
-        type: Number,
-        default: null,
-      },
-
-      strengths: {
-        type: [String],
-        default: [],
-      },
-
-      weaknesses: {
-        type: [String],
-        default: [],
-      },
-
-      recommendations: {
-        type: [String],
-        default: [],
-      },
+    feedback: {
+      type: String,
+      default: "",
     },
 
     strengths: {
@@ -71,6 +45,49 @@ const questionSchema = new mongoose.Schema(
   },
 );
 
+// Final Interview Feedback Schema
+const finalFeedbackSchema = new mongoose.Schema(
+  {
+    summary: {
+      type: String,
+      default: "",
+    },
+
+    technicalScore: {
+      type: Number,
+      min: 0,
+      max: 10,
+      default: null,
+    },
+
+    communicationScore: {
+      type: Number,
+      min: 0,
+      max: 10,
+      default: null,
+    },
+
+    strengths: {
+      type: [String],
+      default: [],
+    },
+
+    weaknesses: {
+      type: [String],
+      default: [],
+    },
+
+    recommendations: {
+      type: [String],
+      default: [],
+    },
+  },
+  {
+    _id: false,
+  },
+);
+
+// Interview Schema
 const interviewSchema = new mongoose.Schema(
   {
     user: {
@@ -127,9 +144,12 @@ const interviewSchema = new mongoose.Schema(
       default: null,
     },
 
+    // -----------------------------------------
+    // Final AI report
+    // -----------------------------------------
     finalFeedback: {
-      type: String,
-      default: "",
+      type: finalFeedbackSchema,
+      default: null,
     },
 
     startedAt: {

@@ -10,21 +10,26 @@ const {
   submitAnswer,
   getInterviewById,
   getUserInterviews,
+  getInterviewReport,
 } = require("../controllers/interview.controller");
 
 // Create interview
 router.post("/", protect, createInterview);
+
+// Get all interviews for logged-in user
+router.get("/", protect, getUserInterviews);
+
+// Get interview report
+// IMPORTANT: keep this BEFORE /:id
+router.get("/:id/report", protect, getInterviewReport);
+
+// Get single interview
+router.get("/:id", protect, getInterviewById);
 
 // Start interview
 router.post("/:id/start", protect, startInterview);
 
 // Submit answer
 router.post("/:id/answer", protect, submitAnswer);
-
-// Get all interviews for logged-in user
-router.get("/", protect, getUserInterviews);
-
-// Get single interview
-router.get("/:id", protect, getInterviewById);
 
 module.exports = router;

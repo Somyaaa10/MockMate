@@ -9,6 +9,8 @@ const authRoutes = require("./routes/auth.routes");
 const resumeRoutes = require("./routes/resume.routes");
 const aiRoutes = require("./routes/ai.routes");
 const interviewRoutes = require("./routes/interview.routes");
+const dashboardRoutes = require("./routes/dashboard.routes");
+const peerInterviewRoutes = require("./routes/peerInterview.routes");
 
 const app = express();
 
@@ -26,6 +28,8 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/resumes", resumeRoutes);
 app.use("/api/v1/ai", aiRoutes);
 app.use("/api/v1/interviews", interviewRoutes);
+app.use("/api/v1/dashboard", dashboardRoutes);
+app.use("/api/v1/peer-interviews", peerInterviewRoutes);
 
 // Health check route
 app.get("/api/v1/health", (req, res) => {

@@ -77,10 +77,25 @@ const getUserInterviews = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, interviews, "Interviews fetched successfully"));
 });
+
+const getInterviewReport = asyncHandler(async (req, res) => {
+  const report = await interviewService.getInterviewReport(
+    req.params.id,
+    req.user._id,
+  );
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, report, "Interview report fetched successfully"),
+    );
+});
+
 module.exports = {
   createInterview,
   startInterview,
   submitAnswer,
   getInterviewById,
   getUserInterviews,
+  getInterviewReport,
 };
