@@ -51,6 +51,11 @@ const joinPeerInterview = async ({ userId, roomCode }) => {
     throw new Error("Peer interview room not found");
   }
 
+  // Only host can start
+  if (peerInterview.host.toString() !== userId.toString()) {
+    throw new Error("Only the host can start the interview");
+  }
+
   if (peerInterview.status !== "waiting") {
     throw new Error("This interview room is no longer available");
   }
@@ -101,11 +106,22 @@ const startPeerInterview = async ({ userId, roomCode }) => {
     throw new Error("Peer interview room not found");
   }
 
+  // Debug
+  console.log("========== START PEER INTERVIEW ==========");
+  console.log("Room Code:", peerInterview.roomCode);
+  console.log("Host ID:", peerInterview.host.toString());
+  console.log("User ID:", userId.toString());
+  console.log("Is Host:", peerInterview.host.toString() === userId.toString());
+  console.log("Participants:", peerInterview.participants.length);
+  console.log("Status:", peerInterview.status);
+  console.log("==========================================");
+
   // Only host can start
   if (peerInterview.host.toString() !== userId.toString()) {
     throw new Error("Only the host can start the interview");
   }
 
+  // Interview must be waiting
   if (peerInterview.status !== "waiting") {
     throw new Error("Interview cannot be started");
   }
@@ -115,10 +131,13 @@ const startPeerInterview = async ({ userId, roomCode }) => {
     throw new Error("Waiting for another participant to join");
   }
 
+  // Start interview
   peerInterview.status = "active";
   peerInterview.startedAt = new Date();
 
   await peerInterview.save();
+
+  console.log("✅ Peer interview started successfully");
 
   return {
     roomId: peerInterview._id,
@@ -166,33 +185,37 @@ const completePeerInterview = async ({ userId, roomCode }) => {
 const getPeerInterview = async ({ userId, roomCode }) => {
   const peerInterview = await PeerInterview.findOne({
     roomCode: roomCode.trim().toUpperCase(),
-  }).populate("participants.user", "name email");
+  })
+    .populate("host", "name email")
+    .populate("participants.user", "name email");
 
   if (!peerInterview) {
     throw new Error("Peer interview room not found");
   }
 
-  // Only participants can access the room
+  // User must be host or participant
+  const isHost = peerInterview.host._id.toString() === userId.toString();
+
   const isParticipant = peerInterview.participants.some(
     (participant) => participant.user._id.toString() === userId.toString(),
   );
 
-  if (!isParticipant) {
-    throw new Error("You are not a participant in this interview");
+  if (!isHost && !isParticipant) {
+    throw new Error("You are not authorized to access this interview");
   }
 
-  return {
-    roomId: peerInterview._id,
-    roomCode: peerInterview.roomCode,
-    title: peerInterview.title,
-    interviewType: peerInterview.interviewType,
-    difficulty: peerInterview.difficulty,
-    status: peerInterview.status,
-    host: peerInterview.host,
-    participants: peerInterview.participants,
-    startedAt: peerInterview.startedAt,
-    completedAt: peerInterview.completedAt,
-  };
+  return peerInterview;
+};
+
+const getUserPeerInterviews = async (userId) => {
+  const interviews = await PeerInterview.find({
+    $or: [{ host: userId }, { "participants.user": userId }],
+  })
+    .populate("host", "name email")
+    .populate("participants.user", "name email")
+    .sort({ createdAt: -1 });
+
+  return interviews;
 };
 
 module.exports = {
@@ -201,4 +224,5 @@ module.exports = {
   startPeerInterview,
   completePeerInterview,
   getPeerInterview,
+  getUserPeerInterviews,
 };

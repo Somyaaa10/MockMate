@@ -40,22 +40,39 @@ const joinPeerInterview = asyncHandler(async (req, res) => {
 });
 
 // Start Peer Interview
-const startPeerInterview = asyncHandler(async (req, res) => {
-  const { roomCode } = req.body;
+const startPeerInterview = async (req, res) => {
+  try {
+    const { roomCode } = req.body || {};
 
-  if (!roomCode) {
-    throw new Error("Room code is required");
+    if (!roomCode) {
+      return res.status(400).json({
+        success: false,
+        statusCode: 400,
+        message: "Room code is required",
+      });
+    }
+
+    console.log("🔐 Authenticated user:", req.user);
+
+    const result = await peerInterviewService.startPeerInterview({
+      userId: req.user._id,
+      roomCode,
+    });
+
+    return res.status(200).json({
+      success: true,
+      statusCode: 200,
+      message: "Peer interview started successfully",
+      data: result,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      statusCode: 400,
+      message: error.message,
+    });
   }
-
-  const result = await peerInterviewService.startPeerInterview({
-    userId: req.user._id,
-    roomCode,
-  });
-
-  return res
-    .status(200)
-    .json(new ApiResponse(200, result, "Peer interview started successfully"));
-});
+};
 
 // Complete Peer Interview
 const completePeerInterview = asyncHandler(async (req, res) => {
@@ -78,22 +95,50 @@ const completePeerInterview = asyncHandler(async (req, res) => {
 });
 
 // Get Peer Interview
-const getPeerInterview = asyncHandler(async (req, res) => {
-  const { roomCode } = req.params;
+const getPeerInterview = async (req, res) => {
+  try {
+    const { roomCode } = req.params;
 
-  if (!roomCode) {
-    throw new Error("Room code is required");
+    const peerInterview = await peerInterviewService.getPeerInterview({
+      userId: req.user._id,
+      roomCode,
+    });
+
+    return res.status(200).json({
+      success: true,
+      statusCode: 200,
+      message: "Peer interview fetched successfully",
+      data: peerInterview,
+    });
+  } catch (error) {
+    return res.status(404).json({
+      success: false,
+      statusCode: 404,
+      message: error.message,
+    });
   }
+};
 
-  const result = await peerInterviewService.getPeerInterview({
-    userId: req.user._id,
-    roomCode,
-  });
+const getUserPeerInterviews = async (req, res) => {
+  try {
+    const interviews = await peerInterviewService.getUserPeerInterviews(
+      req.user._id,
+    );
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, result, "Peer interview fetched successfully"));
-});
+    return res.status(200).json({
+      success: true,
+      statusCode: 200,
+      message: "Peer interviews fetched successfully",
+      data: interviews,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      statusCode: 500,
+      message: error.message,
+    });
+  }
+};
 
 // Export
 module.exports = {
@@ -102,4 +147,5 @@ module.exports = {
   startPeerInterview,
   completePeerInterview,
   getPeerInterview,
+  getUserPeerInterviews,
 };

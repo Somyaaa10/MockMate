@@ -10,14 +10,25 @@ const {
   startPeerInterview,
   completePeerInterview,
   getPeerInterview,
+  getUserPeerInterviews,
 } = require("../controllers/peerInterview.controller");
 
-// Create peer interview room
+// Create
 router.post("/", protect, createPeerInterview);
 
-// Join peer interview room
+// Join
 router.post("/join", protect, joinPeerInterview);
 
+// Start
+router.post("/start", protect, startPeerInterview);
+
+// Complete
+router.post("/complete", protect, completePeerInterview);
+
+// History
+router.get("/", protect, getUserPeerInterviews);
+
+// Single room
 router.get("/:roomCode", protect, getPeerInterview);
 
 module.exports = router;
