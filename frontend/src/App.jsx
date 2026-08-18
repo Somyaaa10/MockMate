@@ -1,22 +1,14 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import Landing from "./pages/Landing";
 
-import LoginPage from "./pages/LoginPage";
-import InterviewPage from "./pages/InterviewPage";
-import InterviewHistory from "./pages/InterviewHistory";
-import PeerInterviewPage from "./pages/PeerInterviewPage";
-
-const App = () => {
+function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
-
-        <Route path="/interview" element={<InterviewPage />} />
-        <Route path="/interviews" element={<InterviewHistory />} />
-        <Route path="/peer-interview" element={<PeerInterviewPage />} />
+        <Route path="/" element={<Landing />} />
       </Routes>
     </BrowserRouter>
   );
-};
+}
 
 export default App;
