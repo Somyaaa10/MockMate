@@ -3,6 +3,7 @@ const express = require("express");
 const router = express.Router();
 
 const { protect } = require("../middleware/auth.middleware");
+const { aiLimiter } = require("../middleware/rateLimit.middleware");
 
 const {
   createInterview,
@@ -14,7 +15,7 @@ const {
 } = require("../controllers/interview.controller");
 
 // Create interview
-router.post("/", protect, createInterview);
+router.post("/", protect, aiLimiter, createInterview);
 
 // Get all interviews for logged-in user
 router.get("/", protect, getUserInterviews);
@@ -30,6 +31,6 @@ router.get("/:id", protect, getInterviewById);
 router.post("/:id/start", protect, startInterview);
 
 // Submit answer
-router.post("/:id/answer", protect, submitAnswer);
+router.post("/:id/answer", protect, aiLimiter, submitAnswer);
 
 module.exports = router;

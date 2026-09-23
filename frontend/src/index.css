@@ -1,8 +1,31 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 :root {
+  /* GLOBAL COLOR SYSTEM */
+  --bg-main: #050505;
+  --bg-surface: #0A0A0A;
+  --card-bg: #101010;
+  --card-elevated: #151515;
+
+  --text-primary: #F5F5F5;
+  --text-secondary: #A1A1AA;
+  --text-muted: #71717A;
+
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --border-hover: rgba(139, 92, 246, 0.35);
+
+  --accent-purple: #8B5CF6;
+  --accent-indigo: #6366F1;
+  --accent-pink: #EC4899;
+
+  --status-success: #22C55E;
+  --status-warning: #F59E0B;
+  --status-error: #EF4444;
+
   font-family:
-    Inter,
+    'Inter',
     ui-sans-serif,
     system-ui,
     -apple-system,
@@ -10,10 +33,12 @@
     "Segoe UI",
     sans-serif;
 
-  color: #f8fafc;
-  background: #020617;
+  color: var(--text-primary);
+  background-color: var(--bg-main);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 * {
@@ -28,36 +53,333 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background:
-    radial-gradient(
-      circle at 20% 10%,
-      rgba(37, 99, 235, 0.12),
-      transparent 30%
-    ),
-    radial-gradient(
-      circle at 80% 20%,
-      rgba(124, 58, 237, 0.12),
-      transparent 30%
-    ),
-    #020617;
+  background-color: #050505;
+  color: #F5F5F5;
+  overflow-x: hidden;
 }
 
-button,
-input,
-textarea,
-select {
-  font: inherit;
+/* =========================================
+   ENTRANCE ANIMATIONS
+   ========================================= */
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-button {
-  cursor: pointer;
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-::selection {
-  background: rgba(59, 130, 246, 0.35);
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slideDown {
+  animation: slideDown 300ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slideUp {
+  animation: slideUp 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes heroEntrance {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes authFadeLeft {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes loginFadeCard {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.page-enter {
+  animation: pageEnter 400ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.fade-in {
+  animation: fadeIn 300ms ease forwards;
+}
+
+.slide-up {
+  animation: slideUp 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.hero-animate-in {
+  animation: heroEntrance 700ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.auth-fade-left {
+  animation: authFadeLeft 600ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.login-fade-card {
+  animation: loginFadeCard 600ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* =========================================
+   AMBIENT BACKGROUND
+   ========================================= */
+@keyframes ambientGlowMove {
+  0%, 100% {
+    background-position: 50% 0%, 20% 40%, 80% 60%;
+    opacity: 0.9;
+  }
+  50% {
+    background-position: 50% 15%, 35% 30%, 65% 75%;
+    opacity: 1;
+  }
+}
+
+.ambient-bg-glow {
+  background-image:
+    radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.06), transparent 45%),
+    radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.04), transparent 40%),
+    radial-gradient(circle at 80% 60%, rgba(236, 72, 153, 0.02), transparent 40%);
+  background-size: 100% 100%, 120% 120%, 120% 120%;
+  animation: ambientGlowMove 18s ease-in-out infinite;
+}
+
+.login-bg-glow {
+  background-image:
+    radial-gradient(circle at 75% 25%, rgba(99, 102, 241, 0.07), transparent 35%),
+    radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.05), transparent 35%);
+  background-size: 100% 100%, 100% 100%;
+  animation: ambientGlowMove 18s ease-in-out infinite;
+}
+
+/* =========================================
+   GRADIENT TEXT
+   ========================================= */
+.text-gradient-purple {
+  background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 50%, #EC4899 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* =========================================
+   CARD UTILITIES
+   ========================================= */
+.saas-card {
+  background-color: #101010;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: border-color 200ms ease, box-shadow 200ms ease, background-color 200ms ease;
+}
+
+.saas-card:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  background-color: #111111;
+}
+
+.saas-card-interactive:hover {
+  border-color: rgba(139, 92, 246, 0.25);
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.06);
+  background-color: #111111;
+  transform: translateY(-1px);
+}
+
+/* =========================================
+   BUTTON UTILITIES
+   ========================================= */
+.btn-primary {
+  background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%);
+  color: #FFFFFF;
+  transition: transform 150ms ease, box-shadow 150ms ease, opacity 150ms ease;
+}
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.25);
+}
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  background-color: #101010;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #F5F5F5;
+  transition: border-color 150ms ease, background-color 150ms ease, transform 150ms ease;
+}
+.btn-secondary:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.16);
+  background-color: #151515;
+  transform: translateY(-1px);
+}
+
+.btn-danger {
+  background-color: #EF4444;
+  color: #FFFFFF;
+  transition: background-color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+}
+.btn-danger:hover:not(:disabled) {
+  background-color: #DC2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.25);
+}
+
+/* Legacy button names for compatibility */
+.btn-saas-primary { background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%); color: #FFFFFF; transition: transform 200ms ease, box-shadow 200ms ease; }
+.btn-saas-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 25px rgba(99, 102, 241, 0.22); }
+.btn-saas-secondary { background-color: #101010; border: 1px solid rgba(255, 255, 255, 0.08); color: #F5F5F5; transition: transform 200ms ease, border-color 200ms ease, background-color 200ms ease; }
+.btn-saas-secondary:hover { transform: translateY(-1px); border-color: rgba(139, 92, 246, 0.35); background-color: #151515; }
+.btn-saas-danger { background-color: #EF4444; color: #FFFFFF; transition: transform 200ms ease, background-color 200ms ease, box-shadow 200ms ease; }
+.btn-saas-danger:hover { transform: translateY(-1px); background-color: #DC2626; box-shadow: 0 6px 20px rgba(239, 68, 68, 0.25); }
+
+/* =========================================
+   PULSE & AI ANIMATIONS
+   ========================================= */
+@keyframes aiPulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+@keyframes recordingPulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  50% { opacity: 0.8; box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+}
+
+@keyframes aiThinking {
+  0%, 100% { opacity: 0.4; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+@keyframes waveBar {
+  0%, 100% { height: 4px; }
+  50% { height: 18px; }
+}
+
+.ai-pulse-dot {
+  animation: aiPulseDot 2s infinite ease-in-out;
+}
+
+.recording-pulse {
+  animation: recordingPulse 1.5s infinite;
+}
+
+.ai-thinking {
+  animation: aiThinking 1.5s ease-in-out infinite;
+}
+
+.wave-bar-1 { animation: waveBar 0.8s ease-in-out infinite; animation-delay: 0s; }
+.wave-bar-2 { animation: waveBar 0.8s ease-in-out infinite; animation-delay: 0.15s; }
+.wave-bar-3 { animation: waveBar 0.8s ease-in-out infinite; animation-delay: 0.3s; }
+.wave-bar-4 { animation: waveBar 0.8s ease-in-out infinite; animation-delay: 0.45s; }
+.wave-bar-5 { animation: waveBar 0.8s ease-in-out infinite; animation-delay: 0.6s; }
+
+/* =========================================
+   SCROLLBAR
+   ========================================= */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #050505;
+}
+::-webkit-scrollbar-thumb {
+  background: #1E1E22;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2E2E34;
+}
+
+/* No scrollbar utility */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* =========================================
+   FORM INPUTS
+   ========================================= */
+.input-field {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background-color: #0A0A0A;
+  padding: 10px 16px;
+  font-size: 14px;
+  color: #F5F5F5;
+  outline: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+.input-field:focus {
+  border-color: rgba(139, 92, 246, 0.55);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.08);
+}
+.input-field::placeholder {
+  color: #71717A;
+}
+.input-field:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #151515;
+}
+
+/* =========================================
+   PROGRESS BARS
+   ========================================= */
+.progress-bar {
+  height: 4px;
+  width: 100%;
+  border-radius: 9999px;
+  background-color: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #8B5CF6, #6366F1);
+  transition: width 600ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* =========================================
+   FOCUS STYLES (ACCESSIBILITY)
+   ========================================= */
+:focus-visible {
+  outline: 2px solid rgba(139, 92, 246, 0.6);
+  outline-offset: 2px;
+}
+
+button:focus-visible, a:focus-visible {
+  outline: 2px solid rgba(139, 92, 246, 0.6);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* =========================================
+   PREFERS REDUCED MOTION
+   ========================================= */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .ambient-bg-glow, .login-bg-glow {
+    animation: none;
+  }
+  .page-enter, .fade-in, .slide-up, .hero-animate-in, .auth-fade-left, .login-fade-card {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  .saas-card:hover, .saas-card-interactive:hover,
+  .btn-primary:hover, .btn-secondary:hover, .btn-danger:hover,
+  .btn-saas-primary:hover, .btn-saas-secondary:hover, .btn-saas-danger:hover {
+    transform: none !important;
+  }
 }

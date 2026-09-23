@@ -4,79 +4,20 @@ const ApiResponse = require("../utils/ApiResponse");
 const recordingService = require("../services/recording.service");
 
 // Create Recording
-const cloudinary = require("../config/cloudinary");
-const Recording = require("../models/recording.model");
+const createRecording = asyncHandler(async (req, res) => {
+  const { interviewId, duration } = req.body || {};
 
-const createRecording = async (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({
-      success: false,
-      message: "Recording file is required",
-    });
-  }
+  const recording = await recordingService.createRecording({
+    userId: req.user._id,
+    interviewId,
+    file: req.file,
+    duration,
+  });
 
-  const { interviewId, duration } = req.body;
-
-  if (!interviewId) {
-    return res.status(400).json({
-      success: false,
-      message: "Interview ID is required",
-    });
-  }
-
-  try {
-    // Upload WebM file to Cloudinary
-    const uploadResult = await new Promise((resolve, reject) => {
-      const uploadStream = cloudinary.uploader.upload_stream(
-        {
-          resource_type: "video",
-          folder: "mockmate/recordings",
-          public_id: `recording-${Date.now()}`,
-        },
-        (error, result) => {
-          if (error) {
-            reject(error);
-          } else {
-            resolve(result);
-          }
-        },
-      );
-
-      uploadStream.end(req.file.buffer);
-    });
-
-    console.log("☁️ Cloudinary upload successful");
-    console.log("Recording URL:", uploadResult.secure_url);
-
-    // Save recording metadata
-    const recording = await Recording.create({
-      user: req.user._id,
-      interview: interviewId,
-      fileUrl: uploadResult.secure_url,
-      publicId: uploadResult.public_id,
-      duration: duration ? Number(duration) : 0,
-    });
-
-    return res.status(201).json({
-      success: true,
-      statusCode: 201,
-      message: "Recording created successfully",
-      data: recording,
-    });
-  } catch (error) {
-    console.error("❌ Recording upload error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Failed to upload recording",
-      error: error.message,
-    });
-  }
-};
-
-module.exports = {
-  createRecording,
-};
+  return res
+    .status(201)
+    .json(new ApiResponse(201, recording, "Recording uploaded successfully"));
+});
 
 // Get User Recordings
 const getUserRecordings = asyncHandler(async (req, res) => {

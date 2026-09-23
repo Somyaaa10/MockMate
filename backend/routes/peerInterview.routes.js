@@ -11,6 +11,7 @@ const {
   completePeerInterview,
   getPeerInterview,
   getUserPeerInterviews,
+  leavePeerInterviewController,
 } = require("../controllers/peerInterview.controller");
 
 // Create
@@ -24,6 +25,9 @@ router.post("/start", protect, startPeerInterview);
 
 // Complete
 router.post("/complete", protect, completePeerInterview);
+
+// Leave
+router.post("/leave", protect, leavePeerInterviewController);
 
 // History
 router.get("/", protect, getUserPeerInterviews);

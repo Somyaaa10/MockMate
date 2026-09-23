@@ -3,10 +3,11 @@ const Resume = require("../models/resume.model");
 const cloudinary = require("../config/cloudinary");
 const { PDFParse } = require("pdf-parse");
 const aiService = require("./ai.service");
+const ApiError = require("../utils/ApiError");
 
 const uploadResume = async ({ userId, file }) => {
   if (!file) {
-    throw new Error("Resume file is required");
+    throw new ApiError(400, "Resume file is required");
   }
 
   // 1. Extract text from PDF
@@ -21,7 +22,7 @@ const uploadResume = async ({ userId, file }) => {
   await parser.destroy();
 
   if (!extractedText) {
-    throw new Error("Could not extract text from resume");
+    throw new ApiError(400, "Could not extract text from resume");
   }
 
   // 2. Upload PDF to Cloudinary
@@ -69,13 +70,17 @@ const getUserResumes = async (userId) => {
 
 // To get single resume
 const getResumeById = async (resumeId, userId) => {
+  if (!mongoose.Types.ObjectId.isValid(resumeId)) {
+    throw new ApiError(400, "Invalid resume ID");
+  }
+
   const resume = await Resume.findOne({
     _id: resumeId,
     user: userId,
   });
 
   if (!resume) {
-    throw new Error("Resume not found");
+    throw new ApiError(404, "Resume not found");
   }
 
   return resume;
@@ -83,13 +88,17 @@ const getResumeById = async (resumeId, userId) => {
 
 // To delete resume
 const deleteResume = async (resumeId, userId) => {
+  if (!mongoose.Types.ObjectId.isValid(resumeId)) {
+    throw new ApiError(400, "Invalid resume ID");
+  }
+
   const resume = await Resume.findOne({
     _id: resumeId,
     user: userId,
   });
 
   if (!resume) {
-    throw new Error("Resume not found");
+    throw new ApiError(404, "Resume not found");
   }
 
   // Delete file from Cloudinary
@@ -106,7 +115,7 @@ const deleteResume = async (resumeId, userId) => {
 // To analyze the resume
 const analyzeResume = async (resumeId, userId) => {
   if (!mongoose.Types.ObjectId.isValid(resumeId)) {
-    throw new Error("Invalid resume ID");
+    throw new ApiError(400, "Invalid resume ID");
   }
 
   const resume = await Resume.findOne({
@@ -115,11 +124,11 @@ const analyzeResume = async (resumeId, userId) => {
   });
 
   if (!resume) {
-    throw new Error("Resume not found");
+    throw new ApiError(404, "Resume not found");
   }
 
   if (!resume.extractedText) {
-    throw new Error("Resume text is not available");
+    throw new ApiError(400, "Resume text is not available");
   }
 
   if (resume.analyzedAt) {
@@ -129,12 +138,23 @@ const analyzeResume = async (resumeId, userId) => {
   const analysis = await aiService.analyzeResume(resume.extractedText);
 
   resume.atsScore = analysis.atsScore;
-  resume.skills = analysis.skills;
-  resume.missingSkills = analysis.missingSkills;
-  resume.strengths = analysis.strengths;
-  resume.weaknesses = analysis.weaknesses;
-  resume.suggestions = analysis.suggestions;
-  resume.interviewQuestions = analysis.interviewQuestions;
+  resume.candidateName = analysis.candidateName || "";
+  resume.candidateEmail = analysis.candidateEmail || "";
+  resume.candidatePhone = analysis.candidatePhone || "";
+  resume.skills = analysis.skills || [];
+  resume.technicalSkills = analysis.technicalSkills || [];
+  resume.softSkills = analysis.softSkills || [];
+  resume.missingSkills = analysis.missingSkills || [];
+  resume.strengths = analysis.strengths || [];
+  resume.weaknesses = analysis.weaknesses || [];
+  resume.suggestions = analysis.suggestions || [];
+  resume.interviewQuestions = analysis.interviewQuestions || [];
+  resume.experience = analysis.experience || [];
+  resume.projects = analysis.projects || [];
+  resume.education = analysis.education || [];
+  resume.certifications = analysis.certifications || [];
+  resume.recommendedTopics = analysis.recommendedTopics || [];
+  resume.recommendedDifficulty = analysis.recommendedDifficulty || "medium";
   resume.analyzedAt = new Date();
 
   await resume.save();
@@ -149,3 +169,4 @@ module.exports = {
   deleteResume,
   analyzeResume,
 };
+

@@ -1,12 +1,21 @@
 const asyncHandler = require("../utils/asyncHandler");
 const ApiResponse = require("../utils/ApiResponse");
 const interviewService = require("../services/interview.service");
+const ApiError = require("../utils/ApiError");
 
 const createInterview = asyncHandler(async (req, res) => {
-  const { resumeId, interviewType, difficulty, numberOfQuestions } = req.body;
+  const {
+    resumeId,
+    interviewType,
+    difficulty,
+    numberOfQuestions,
+    targetRole,
+    experienceLevel,
+    durationMinutes,
+  } = req.body;
 
   if (!resumeId) {
-    throw new Error("resumeId is required");
+    throw new ApiError(400, "resumeId is required");
   }
 
   const interview = await interviewService.createInterview({
@@ -15,6 +24,9 @@ const createInterview = asyncHandler(async (req, res) => {
     interviewType,
     difficulty,
     numberOfQuestions,
+    targetRole,
+    experienceLevel,
+    durationMinutes,
   });
 
   return res
@@ -37,8 +49,9 @@ const submitAnswer = asyncHandler(async (req, res) => {
   const { answer } = req.body;
 
   if (!answer) {
-    throw new Error("Answer is required");
+    throw new ApiError(400, "Answer is required");
   }
+
 
   const result = await interviewService.submitAnswer({
     interviewId: req.params.id,

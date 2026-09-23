@@ -12,11 +12,25 @@ const interviewRoutes = require("./routes/interview.routes");
 const dashboardRoutes = require("./routes/dashboard.routes");
 const peerInterviewRoutes = require("./routes/peerInterview.routes");
 const recordingRoutes = require("./routes/recording.routes");
+const subscriptionRoutes = require("./routes/subscription.routes");
+const redisTestRoutes = require("./routes/test.redis.routes");
+const whatsappRoutes = require("./routes/whatsapp.routes");
+
+const errorHandler = require("./middleware/error.middleware");
 
 const app = express();
 
+// Trust reverse proxy (e.g. ngrok, Nginx, Render) for client IP rate limiting
+app.set("trust proxy", 1);
+
 // middlewares
-app.use(express.json());
+app.use(
+  express.json({
+    verify: (req, res, buf) => {
+      req.rawBody = buf;
+    },
+  }),
+);
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.use(helmet());
@@ -32,6 +46,9 @@ app.use("/api/v1/interviews", interviewRoutes);
 app.use("/api/v1/dashboard", dashboardRoutes);
 app.use("/api/v1/peer-interviews", peerInterviewRoutes);
 app.use("/api/v1/recordings", recordingRoutes);
+app.use("/api/v1/subscriptions", subscriptionRoutes);
+app.use("/api/v1/test-redis", redisTestRoutes);
+app.use("/api/v1/whatsapp", whatsappRoutes);
 
 // Health check route
 app.get("/api/v1/health", (req, res) => {
@@ -40,5 +57,8 @@ app.get("/api/v1/health", (req, res) => {
     message: "MockMate Backend Running Successfully",
   });
 });
+
+// Global Error Handler
+app.use(errorHandler);
 
 module.exports = app;

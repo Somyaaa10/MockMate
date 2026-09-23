@@ -1,13 +1,17 @@
 const Interview = require("../models/interview.model");
+const { getUserQuota } = require("./quota.service");
 
 const getDashboard = async (userId) => {
-  const interviews = await Interview.find({
-    user: userId,
-  })
-    .select(
-      "interviewType difficulty numberOfQuestions status overallScore createdAt completedAt",
-    )
-    .sort({ createdAt: -1 });
+  const [interviews, quota] = await Promise.all([
+    Interview.find({
+      user: userId,
+    })
+      .select(
+        "interviewType difficulty numberOfQuestions status overallScore createdAt completedAt",
+      )
+      .sort({ createdAt: -1 }),
+    getUserQuota(userId),
+  ]);
 
   const totalInterviews = interviews.length;
 
@@ -48,8 +52,16 @@ const getDashboard = async (userId) => {
     averageScore,
     bestScore,
     recentInterviews,
+    // Quota statistics
+    plan: quota.plan,
+    isPremium: quota.isPremium,
+    aiInterviewsUsed: quota.aiInterviewsUsed,
+    aiInterviewsLimit: quota.aiInterviewsLimit,
+    aiInterviewsRemaining: quota.aiInterviewsRemaining,
+    quotaExceeded: quota.quotaExceeded,
   };
 };
+
 
 module.exports = {
   getDashboard,

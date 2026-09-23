@@ -29,10 +29,37 @@ const userSchema = new mongoose.Schema(
       enum: ["candidate", "admin"],
       default: "candidate",
     },
+    whatsappPhone: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+    mobile: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    designation: {
+      type: String,
+      trim: true,
+      default: "",
+    },
 
     profileImage: {
       type: String,
       default: "",
+    },
+
+    // Face descriptor for interview integrity verification
+    // 128-float mathematical representation — NOT a photo, cannot reconstruct a face image
+    faceDescriptor: {
+      type: [Number],
+      default: [],
+    },
+
+    faceEnrolledAt: {
+      type: Date,
     },
 
     isVerified: {
@@ -53,7 +80,6 @@ const userSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
-
 
 // Hash password before saving
 userSchema.pre("save", async function () {

@@ -5,26 +5,28 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 // analyzes resume
 const analyzeResume = async (resumeText) => {
   const prompt = `
-You are an expert ATS resume analyzer and technical recruiter.
+You are an expert ATS resume analyzer and senior technical recruiter.
 
 Analyze the following resume carefully.
 
-Evaluate:
+Extract and evaluate:
 1. ATS score from 0 to 100.
-2. Technical and professional skills explicitly present.
-3. Important skills missing for a modern software engineering candidate.
-4. Resume strengths.
-5. Resume weaknesses.
-6. Specific actionable suggestions.
-7. Technical interview questions based on the candidate's actual experience.
+2. Candidate contact information (Name, Email, Phone) if present.
+3. Explicit technical skills and soft skills.
+4. Important missing skills for the candidate's domain.
+5. Key strengths and weaknesses.
+6. Practical actionable suggestions for resume improvement.
+7. Technical interview questions based on actual projects/work experience.
+8. Work experience list (company, role, duration, description).
+9. Projects list (title, description, technologies).
+10. Education (degree, institution, year).
+11. Certifications list.
+12. Recommended interview topics and difficulty ("easy" | "medium" | "hard").
 
 Important rules:
-- Do not invent experience that is not present.
-- Only list skills supported by the resume.
-- Missing skills should be relevant to the candidate's current profile.
-- Suggestions should be practical and specific.
-- Interview questions should be based on technologies, projects, education, and experience found in the resume.
-- Return only the requested structured JSON.
+- Do not invent experience or skills not supported by the resume.
+- Missing skills should be relevant to the candidate's profile.
+- Return only valid structured JSON.
 
 RESUME:
 ${resumeText}
@@ -35,55 +37,57 @@ ${resumeText}
 
     responseSchema: {
       type: "object",
-
       properties: {
-        atsScore: {
-          type: "integer",
-        },
-
-        skills: {
+        atsScore: { type: "integer" },
+        candidateName: { type: "string" },
+        candidateEmail: { type: "string" },
+        candidatePhone: { type: "string" },
+        skills: { type: "array", items: { type: "string" } },
+        technicalSkills: { type: "array", items: { type: "string" } },
+        softSkills: { type: "array", items: { type: "string" } },
+        missingSkills: { type: "array", items: { type: "string" } },
+        strengths: { type: "array", items: { type: "string" } },
+        weaknesses: { type: "array", items: { type: "string" } },
+        suggestions: { type: "array", items: { type: "string" } },
+        interviewQuestions: { type: "array", items: { type: "string" } },
+        experience: {
           type: "array",
           items: {
-            type: "string",
+            type: "object",
+            properties: {
+              company: { type: "string" },
+              role: { type: "string" },
+              duration: { type: "string" },
+              description: { type: "string" },
+            },
           },
         },
-
-        missingSkills: {
+        projects: {
           type: "array",
           items: {
-            type: "string",
+            type: "object",
+            properties: {
+              title: { type: "string" },
+              description: { type: "string" },
+              technologies: { type: "array", items: { type: "string" } },
+            },
           },
         },
-
-        strengths: {
+        education: {
           type: "array",
           items: {
-            type: "string",
+            type: "object",
+            properties: {
+              degree: { type: "string" },
+              institution: { type: "string" },
+              year: { type: "string" },
+            },
           },
         },
-
-        weaknesses: {
-          type: "array",
-          items: {
-            type: "string",
-          },
-        },
-
-        suggestions: {
-          type: "array",
-          items: {
-            type: "string",
-          },
-        },
-
-        interviewQuestions: {
-          type: "array",
-          items: {
-            type: "string",
-          },
-        },
+        certifications: { type: "array", items: { type: "string" } },
+        recommendedTopics: { type: "array", items: { type: "string" } },
+        recommendedDifficulty: { type: "string" },
       },
-
       required: [
         "atsScore",
         "skills",
@@ -108,12 +112,16 @@ ${resumeText}
         config,
       });
 
-      return JSON.parse(response.text);
+      const parsed = JSON.parse(response.text);
+      if (!parsed || typeof parsed.atsScore !== "number") {
+        throw new Error("Invalid structure returned by Gemini for resume analysis");
+      }
+
+      return parsed;
     } catch (error) {
       lastError = error;
 
       const status = error?.status || error?.error?.status;
-
       const code = error?.code || error?.error?.code;
 
       console.error(
@@ -121,16 +129,13 @@ ${resumeText}
         code || status || error.message,
       );
 
-      // Retry only temporary availability errors
       if (code !== 503 && status !== "UNAVAILABLE") {
         throw error;
       }
 
       if (attempt < 3) {
         const delay = attempt * 2000;
-
         console.log(`⏳ Retrying Gemini in ${delay}ms...`);
-
         await sleep(delay);
       }
     }
@@ -138,6 +143,7 @@ ${resumeText}
 
   throw lastError;
 };
+
 
 // generate interview question
 const generateInterviewQuestions = async ({
@@ -253,39 +259,32 @@ const evaluateInterviewAnswer = async ({
   difficulty,
 }) => {
   const prompt = `
-You are an expert technical interviewer.
+You are an expert technical interviewer evaluating a live candidate answer.
 
-Evaluate the candidate's answer to the interview question.
-
-Interview type:
-${interviewType}
-
-Difficulty:
-${difficulty}
+Interview type: ${interviewType}
+Difficulty level: ${difficulty}
 
 Question:
-${question}
+"${question}"
 
-Candidate Answer:
-${answer}
+Candidate's Spoken Answer:
+"${answer}"
 
-Candidate Resume:
-${resumeText}
+Candidate Resume Text:
+${resumeText ? resumeText.substring(0, 1000) : "N/A"}
 
-Evaluate:
-1. Score from 0 to 10.
-2. Technical accuracy.
-3. Quality of explanation.
-4. Strengths.
-5. Improvements.
-6. Specific feedback.
+Evaluate thoroughly:
+1. Technical accuracy and correctness ("excellent" | "good" | "fair" | "poor").
+2. Technical Score (0 to 10).
+3. Communication Score (0 to 10).
+4. Confidence Score (0 to 10).
+5. Overall score (0 to 10).
+6. Key strengths in the answer.
+7. Weaknesses / areas to improve.
+8. Specific missing technical concepts.
+9. Constructive concise feedback (2-3 sentences).
 
-Rules:
-- Evaluate only what the candidate actually answered.
-- Do not invent information.
-- Be fair and concise.
-- Consider the candidate's resume when judging their experience.
-- Return only JSON.
+Return structured JSON.
 `;
 
   const response = await ai.models.generateContent({
@@ -296,38 +295,30 @@ Rules:
 
       responseSchema: {
         type: "object",
-
         properties: {
-          score: {
-            type: "integer",
-            description: "Score from 0 to 10",
-          },
-
-          feedback: {
-            type: "string",
-          },
-
-          strengths: {
-            type: "array",
-            items: {
-              type: "string",
-            },
-          },
-
-          improvements: {
-            type: "array",
-            items: {
-              type: "string",
-            },
-          },
+          score: { type: "integer", description: "Score from 0 to 10" },
+          technicalScore: { type: "integer" },
+          communicationScore: { type: "integer" },
+          confidenceScore: { type: "integer" },
+          correctness: { type: "string" },
+          feedback: { type: "string" },
+          strengths: { type: "array", items: { type: "string" } },
+          weaknesses: { type: "array", items: { type: "string" } },
+          missingConcepts: { type: "array", items: { type: "string" } },
+          improvements: { type: "array", items: { type: "string" } },
         },
-
-        required: ["score", "feedback", "strengths", "improvements"],
+        required: ["score", "feedback", "strengths"],
       },
     },
   });
 
-  return JSON.parse(response.text);
+  const result = JSON.parse(response.text);
+  if (!result.improvements) result.improvements = result.weaknesses || [];
+  if (!result.technicalScore) result.technicalScore = result.score || 7;
+  if (!result.communicationScore) result.communicationScore = result.score || 7;
+  if (!result.confidenceScore) result.confidenceScore = result.score || 7;
+
+  return result;
 };
 
 const generateFinalInterviewFeedback = async ({
@@ -425,6 +416,10 @@ Use this exact structure:
                 type: "number",
               },
 
+              problemSolvingScore: {
+                type: "number",
+              },
+
               strengths: {
                 type: "array",
                 items: {
@@ -451,6 +446,7 @@ Use this exact structure:
               "summary",
               "technicalScore",
               "communicationScore",
+              "problemSolvingScore",
               "strengths",
               "weaknesses",
               "recommendations",
@@ -468,6 +464,12 @@ Use this exact structure:
         typeof result.communicationScore !== "number"
       ) {
         throw new Error("Invalid final interview feedback from Gemini");
+      }
+
+      if (typeof result.problemSolvingScore !== "number") {
+        result.problemSolvingScore = Math.round(
+          (result.technicalScore + result.communicationScore) / 2
+        );
       }
 
       return result;
@@ -501,9 +503,164 @@ Use this exact structure:
   throw lastError;
 };
 
+// -------------------------------------------------------------
+// Real-Time Interviewer: AI Greeting Generation
+// -------------------------------------------------------------
+const generateGreeting = async ({
+  candidateName,
+  targetRole,
+  interviewType,
+  difficulty,
+  resumeText,
+}) => {
+  const prompt = `
+You are a warm, highly professional human AI recruiter conducting a live mock interview for MockMate.
+
+Candidate Name: ${candidateName || "Candidate"}
+Target Role: ${targetRole || "Full Stack Developer"}
+Interview Type: ${interviewType || "technical"}
+Difficulty Level: ${difficulty || "medium"}
+
+Candidate Resume Snippet:
+${resumeText ? resumeText.substring(0, 800) : "No resume text attached."}
+
+Generate a concise, welcoming greeting message (2 sentences) introducing yourself as the MockMate AI interviewer and setting a positive tone. Also generate a strong opening question related to their experience or target role.
+
+Return valid JSON with keys "greeting" and "firstQuestion".
+`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3.1-flash-lite",
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: "object",
+          properties: {
+            greeting: { type: "string" },
+            firstQuestion: { type: "string" },
+          },
+          required: ["greeting", "firstQuestion"],
+        },
+      },
+    });
+
+    return JSON.parse(response.text);
+  } catch (error) {
+    console.warn("⚠️ Falling back to default AI greeting due to error:", error.message);
+    return {
+      greeting: `Hello ${candidateName || "Candidate"}, welcome to your MockMate ${interviewType} mock interview for the ${targetRole || "Software Developer"} position. I'm excited to speak with you today.`,
+      firstQuestion: `To start off, please introduce yourself and tell me about a project you recently worked on.`,
+    };
+  }
+};
+
+// -------------------------------------------------------------
+// Real-Time Interviewer: Dynamic Question & Follow-Up Generation
+// -------------------------------------------------------------
+const generateNextDynamicStep = async ({
+  resumeText,
+  targetRole,
+  experienceLevel,
+  interviewType,
+  currentDifficulty,
+  conversationHistory = [],
+  lastAnswer,
+  lastEvaluation,
+  questionNumber,
+  totalQuestions,
+  candidateContext = {},
+}) => {
+  const prompt = `
+You are an expert technical recruiter and AI interviewer conducting an adaptive real-time mock interview.
+
+Target Role: ${targetRole || "Full Stack Developer"}
+Experience Level: ${experienceLevel || "Mid Level"}
+Interview Type: ${interviewType || "technical"}
+Current Difficulty: ${currentDifficulty || "medium"}
+Progress: Question ${questionNumber} of ${totalQuestions}
+
+Candidate Resume Text:
+${resumeText ? resumeText.substring(0, 1200) : "N/A"}
+
+Candidate Specific Projects & Skills Context:
+${JSON.stringify(candidateContext, null, 2)}
+
+Recent Conversation History:
+${JSON.stringify(conversationHistory.slice(-6), null, 2)}
+
+Candidate's Latest Answer:
+"${lastAnswer || ""}"
+
+Latest Evaluation Score: ${lastEvaluation?.score ?? 7}/10
+Correctness: ${lastEvaluation?.correctness || "good"}
+Missing Concepts: ${JSON.stringify(lastEvaluation?.missingConcepts || [])}
+
+ADAPTIVE DECISION RULES:
+1. If candidate's last answer was weak/inaccurate or missed key concepts -> set nextAction="FOLLOW_UP" or "EASIER" and ask a clarifying question about that specific concept.
+2. If candidate's last answer was strong & high score -> set nextAction="HARDER" or "NEW_TOPIC" and increase difficulty or ask deeper architectural/trade-off questions.
+3. If candidate listed specific projects in their resume (e.g. "Hospital Management System" or "E-commerce platform") -> set nextAction="PROJECT_QUESTION" and ask a question specifically addressing how they designed or built that project!
+4. Never repeat questions already present in conversation history.
+5. If questionNumber >= totalQuestions, set nextAction="END_INTERVIEW" and shouldEndInterview=true.
+
+Return JSON:
+{
+  "nextAction": "FOLLOW_UP" | "HARDER" | "EASIER" | "NEW_TOPIC" | "PROJECT_QUESTION" | "END_INTERVIEW",
+  "nextQuestion": "The text of the next question",
+  "isFollowUp": true/false,
+  "topic": "Topic category (e.g. React, Node.js, MongoDB, System Design)",
+  "suggestedDifficulty": "easy" | "medium" | "hard",
+  "shouldEndInterview": true/false,
+  "interviewerNote": "Short explanation of rationale"
+}
+`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3.1-flash-lite",
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: "object",
+          properties: {
+            nextAction: { type: "string" },
+            nextQuestion: { type: "string" },
+            isFollowUp: { type: "boolean" },
+            topic: { type: "string" },
+            suggestedDifficulty: { type: "string" },
+            shouldEndInterview: { type: "boolean" },
+            interviewerNote: { type: "string" },
+          },
+          required: ["nextAction", "nextQuestion", "isFollowUp", "shouldEndInterview"],
+        },
+      },
+    });
+
+    const parsed = JSON.parse(response.text);
+    if (!parsed.nextAction) parsed.nextAction = parsed.isFollowUp ? "FOLLOW_UP" : "NEW_TOPIC";
+    return parsed;
+  } catch (error) {
+    console.warn("⚠️ Error generating dynamic next step, falling back:", error.message);
+    return {
+      nextAction: "FOLLOW_UP",
+      nextQuestion: "Can you elaborate on how you handled state management and error boundaries in that application?",
+      isFollowUp: true,
+      topic: "System Architecture",
+      suggestedDifficulty: currentDifficulty || "medium",
+      shouldEndInterview: false,
+      interviewerNote: "Fallback follow-up question",
+    };
+  }
+};
+
+
 module.exports = {
   analyzeResume,
   generateInterviewQuestions,
   evaluateInterviewAnswer,
   generateFinalInterviewFeedback,
+  generateGreeting,
+  generateNextDynamicStep,
 };

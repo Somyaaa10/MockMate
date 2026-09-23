@@ -1,96 +1,132 @@
 import {
-  BrainCircuit,
-  MessageSquareText,
-  Video,
+  Zap,
+  Users,
   FileText,
-  BarChart3,
-  ShieldCheck,
+  Video,
+  CheckCircle,
+  Infinity as InfinityIcon,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
-const features = [
+const DEFAULT_FEATURES = [
   {
-    icon: BrainCircuit,
-    title: "AI Mock Interviews",
-    description:
-      "Practice realistic technical, behavioral, and system-design interviews with AI-generated questions.",
+    feature: "AI_INTERVIEW",
+    name: "AI Interview",
+    level: "Free",
+    quota: 1,
+    icon: Zap,
+    color: "bg-[#16161A] border-[rgba(255,255,255,0.08)] text-[#8B5CF6]",
+    link: "/interview/new",
   },
   {
-    icon: Video,
-    title: "Peer Interviews",
-    description:
-      "Connect with another candidate and conduct realistic one-to-one mock interviews using WebRTC.",
+    feature: "ONE_TO_ONE_INTERVIEW",
+    name: "One To One Interview",
+    level: "Free",
+    quota: 100,
+    icon: Users,
+    color: "bg-[#16161A] border-[rgba(255,255,255,0.08)] text-[#6366F1]",
+    link: "/peer/setup",
   },
   {
-    icon: MessageSquareText,
-    title: "Real-Time Interaction",
-    description:
-      "Use video, audio, screen sharing, and chat to simulate an actual interview environment.",
-  },
-  {
+    feature: "RESUME_ANALYZER",
+    name: "Resume Analyzer",
+    level: "Free",
+    quota: 1,
     icon: FileText,
-    title: "Resume Analysis",
-    description:
-      "Upload your resume and get personalized interview questions based on your skills and experience.",
+    color: "bg-[#16161A] border-[rgba(255,255,255,0.08)] text-[#8B5CF6]",
   },
   {
-    icon: BarChart3,
-    title: "Performance Reports",
-    description:
-      "Understand your strengths and weaknesses through detailed AI-generated performance reports.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Interview Ready",
-    description:
-      "Build confidence through structured practice and measurable improvement over time.",
+    feature: "INTERVIEW_RECORDING",
+    name: "Interview Recording",
+    level: "Free",
+    quota: 5,
+    icon: Video,
+    color: "bg-[#16161A] border-[rgba(255,255,255,0.08)] text-[#EC4899]",
+    link: "/peer/setup",
   },
 ];
 
-function FeatureList() {
+export default function FeatureList({ features }) {
+  const displayFeatures = features && features.length > 0 ? features : DEFAULT_FEATURES;
+
+  const getFeatureConfig = (feat) => {
+    const key = typeof feat === "string" ? feat : feat.feature;
+    const match = DEFAULT_FEATURES.find(
+      (f) => f.feature === key || f.name.toLowerCase() === key.toLowerCase()
+    );
+
+    if (match) {
+      return {
+        ...match,
+        ...(typeof feat === "object" ? feat : {}),
+      };
+    }
+
+    return {
+      feature: key,
+      name: typeof feat === "object" && feat.name ? feat.name : key.replace(/_/g, " "),
+      level: typeof feat === "object" && feat.level ? feat.level : "Free",
+      quota: typeof feat === "object" && feat.quota !== undefined ? feat.quota : 1,
+      icon: CheckCircle,
+      color: "bg-[#16161A] border-[rgba(255,255,255,0.08)] text-[#8B5CF6]",
+    };
+  };
+
   return (
-    <section id="features" className="px-6 py-24">
-      <div className="mx-auto max-w-7xl">
-        <div className="mx-auto max-w-2xl text-center">
-          <span className="text-sm font-semibold uppercase tracking-widest text-cyan-400">
-            Powerful Features
-          </span>
+    <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
+      {displayFeatures.map((item) => {
+        const config = getFeatureConfig(item);
+        const Icon = config.icon;
+        const targetLink = config.link;
 
-          <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
-            Everything you need to{" "}
-            <span className="text-blue-400">prepare better</span>
-          </h2>
-
-          <p className="mt-5 text-slate-400">
-            MockMate combines AI-powered practice with real human interaction to
-            create a complete interview preparation experience.
-          </p>
-        </div>
-
-        <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {features.map((feature) => {
-            const Icon = feature.icon;
-
-            return (
+        const cardContent = (
+          <div
+            className={`group relative rounded-2xl border border-[rgba(255,255,255,0.08)] bg-[#111113] p-6 backdrop-blur-xl saas-card ${
+              targetLink ? "cursor-pointer" : ""
+            }`}
+          >
+            <div className="flex items-center justify-between mb-4">
               <div
-                key={feature.title}
-                className="group rounded-2xl border border-white/10 bg-white/[0.03] p-7 backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:border-blue-500/30 hover:bg-white/[0.05]"
+                className={`flex h-12 w-12 items-center justify-center rounded-xl border ${config.color}`}
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400 transition group-hover:bg-blue-500/20">
-                  <Icon className="h-6 w-6" />
-                </div>
-
-                <h3 className="mt-6 text-lg font-semibold">{feature.title}</h3>
-
-                <p className="mt-3 text-sm leading-6 text-slate-400">
-                  {feature.description}
-                </p>
+                <Icon className="h-6 w-6" />
               </div>
-            );
-          })}
-        </div>
-      </div>
-    </section>
+              <span className="rounded-full border border-[rgba(255,255,255,0.08)] bg-[#16161A] px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-[#A1A1AA]">
+                {config.level}
+              </span>
+            </div>
+
+            <h3 className="text-lg font-bold text-[#F5F5F5] tracking-wide">
+              {config.name}
+            </h3>
+
+            <div className="mt-4 flex items-center justify-between border-t border-[rgba(255,255,255,0.08)] pt-3">
+              <span className="text-xs font-medium text-[#71717A] uppercase tracking-wider">
+                Quota
+              </span>
+              <div className="flex items-center gap-1 text-sm font-semibold text-[#F5F5F5]">
+                {config.quota === null ? (
+                  <span className="flex items-center gap-1 text-[#22C55E]">
+                    <InfinityIcon className="h-4 w-4" /> Unlimited
+                  </span>
+                ) : (
+                  <span>{config.quota}</span>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+
+        if (targetLink) {
+          return (
+            <Link key={config.feature} to={targetLink} className="block">
+              {cardContent}
+            </Link>
+          );
+        }
+
+        return <div key={config.feature}>{cardContent}</div>;
+      })}
+    </div>
   );
 }
-
-export default FeatureList;

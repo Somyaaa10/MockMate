@@ -41,9 +41,30 @@ const deleteResume = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, null, "Resume deleted successfully"));
 });
 
+// Resume AI Analysis controller
+const analyzeResume = asyncHandler(async (req, res) => {
+  const resume = await resumeService.analyzeResume(req.params.id, req.user._id);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, resume, "Resume analyzed successfully"));
+});
+
+// Get Resume Analysis report controller
+const getResumeAnalysis = asyncHandler(async (req, res) => {
+  const resume = await resumeService.getResumeById(req.params.id, req.user._id);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, resume, "Resume analysis fetched successfully"));
+});
+
 module.exports = {
   uploadResume,
   getUserResumes,
   getResumeById,
   deleteResume,
+  analyzeResume,
+  getResumeAnalysis,
 };
+

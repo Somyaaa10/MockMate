@@ -10,6 +10,8 @@ const {
   getUserResumes,
   getResumeById,
   deleteResume,
+  analyzeResume,
+  getResumeAnalysis,
 } = require("../controllers/resume.controller");
 
 // Upload Resume
@@ -21,7 +23,14 @@ router.get("/", protect, getUserResumes);
 // Get single resume
 router.get("/:id", protect, getResumeById);
 
+// Analyze resume with Gemini
+router.post("/:id/analyze", protect, analyzeResume);
+
+// Get resume analysis report
+router.get("/:id/analysis", protect, getResumeAnalysis);
+
 // Delete resume
 router.delete("/:id", protect, deleteResume);
 
 module.exports = router;
+

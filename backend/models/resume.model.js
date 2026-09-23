@@ -34,7 +34,32 @@ const resumeSchema = new mongoose.Schema(
       default: null,
     },
 
+    candidateName: {
+      type: String,
+      default: "",
+    },
+
+    candidateEmail: {
+      type: String,
+      default: "",
+    },
+
+    candidatePhone: {
+      type: String,
+      default: "",
+    },
+
     skills: {
+      type: [String],
+      default: [],
+    },
+
+    technicalSkills: {
+      type: [String],
+      default: [],
+    },
+
+    softSkills: {
       type: [String],
       default: [],
     },
@@ -64,6 +89,47 @@ const resumeSchema = new mongoose.Schema(
       default: [],
     },
 
+    experience: [
+      {
+        company: { type: String, default: "" },
+        role: { type: String, default: "" },
+        duration: { type: String, default: "" },
+        description: { type: String, default: "" },
+      },
+    ],
+
+    projects: [
+      {
+        title: { type: String, default: "" },
+        description: { type: String, default: "" },
+        technologies: { type: [String], default: [] },
+      },
+    ],
+
+    education: [
+      {
+        degree: { type: String, default: "" },
+        institution: { type: String, default: "" },
+        year: { type: String, default: "" },
+      },
+    ],
+
+    certifications: {
+      type: [String],
+      default: [],
+    },
+
+    recommendedTopics: {
+      type: [String],
+      default: [],
+    },
+
+    recommendedDifficulty: {
+      type: String,
+      enum: ["easy", "medium", "hard"],
+      default: "medium",
+    },
+
     analyzedAt: {
       type: Date,
       default: null,
@@ -75,3 +141,4 @@ const resumeSchema = new mongoose.Schema(
 );
 
 module.exports = mongoose.model("Resume", resumeSchema);
+

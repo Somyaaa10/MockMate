@@ -67,6 +67,13 @@ const finalFeedbackSchema = new mongoose.Schema(
       default: null,
     },
 
+    problemSolvingScore: {
+      type: Number,
+      min: 0,
+      max: 10,
+      default: null,
+    },
+
     strengths: {
       type: [String],
       default: [],
@@ -143,6 +150,44 @@ const interviewSchema = new mongoose.Schema(
       max: 10,
       default: null,
     },
+
+    targetRole: {
+      type: String,
+      default: "Full Stack Developer",
+    },
+
+    experienceLevel: {
+      type: String,
+      enum: ["Entry Level", "Mid Level", "Senior"],
+      default: "Mid Level",
+    },
+
+    durationMinutes: {
+      type: Number,
+      default: 15,
+    },
+
+    conversationHistory: [
+      {
+        speaker: {
+          type: String,
+          enum: ["ai", "candidate"],
+          required: true,
+        },
+        text: {
+          type: String,
+          required: true,
+        },
+        isFollowUp: {
+          type: Boolean,
+          default: false,
+        },
+        timestamp: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
 
     // -----------------------------------------
     // Final AI report
