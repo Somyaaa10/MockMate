@@ -14,7 +14,10 @@ const getUserQuota = async (userId) => {
       user: userId,
       status: "active",
     }),
-    Interview.countDocuments({ user: userId }),
+    Interview.countDocuments({
+      user: userId,
+      status: { $in: ["in_progress", "completed"] },
+    }),
   ]);
 
   const isPro = Boolean(user?.isPremium || activeSub);

@@ -53,7 +53,6 @@ export function AuthProvider({ children }) {
       try {
         await fetchCurrentUser(token);
       } catch {
-        // Invalid/expired token
         console.log("Session expired");
       } finally {
         setLoading(false);
@@ -88,6 +87,24 @@ export function AuthProvider({ children }) {
       password,
     });
 
+    return response.data;
+  };
+
+  // Forgot Password
+  const forgotPassword = async (email) => {
+    const response = await axios.post(`${API_BASE_URL}/auth/forgot-password`, {
+      email,
+    });
+    return response.data;
+  };
+
+  // Reset Password
+  const resetPassword = async (resetToken, password, confirmPassword) => {
+    const response = await axios.post(`${API_BASE_URL}/auth/reset-password`, {
+      token: resetToken,
+      password,
+      confirmPassword,
+    });
     return response.data;
   };
 
@@ -129,6 +146,8 @@ export function AuthProvider({ children }) {
         loading,
         login,
         register,
+        forgotPassword,
+        resetPassword,
         logout,
         updateProfile,
         refreshUser,

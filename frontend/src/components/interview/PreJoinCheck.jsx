@@ -47,24 +47,24 @@ const initialChecks = {
 
 function CheckRow({ label, status, detail, icon: Icon }) {
   const statusConfig = {
-    [CHECK_IDLE]: { dot: "bg-[#262626]", text: "text-[#71717A]", label: "Pending" },
-    [CHECK_RUNNING]: { dot: "bg-[#8B5CF6] animate-pulse", text: "text-[#A1A1AA]", label: "Checking..." },
+    [CHECK_IDLE]: { dot: "bg-[var(--strong-line)]", text: "text-[var(--text-muted)]", label: "Pending" },
+    [CHECK_RUNNING]: { dot: "bg-[#F97316] animate-pulse", text: "text-[var(--text-secondary)]", label: "Checking..." },
     [CHECK_PASS]: { dot: "bg-[#22C55E]", text: "text-[#22C55E]", label: "Ready" },
     [CHECK_FAIL]: { dot: "bg-[#EF4444]", text: "text-[#EF4444]", label: "Failed" },
   };
   const cfg = statusConfig[status] || statusConfig[CHECK_IDLE];
 
   return (
-    <div className="flex items-center gap-3 py-2.5 border-b border-[rgba(255,255,255,0.06)] last:border-0">
+    <div className="flex items-center gap-3 py-2.5 border-b border-[var(--border-subtle)] last:border-0">
       <div className={`h-2.5 w-2.5 rounded-full shrink-0 ${cfg.dot}`} />
       <div className="flex-1 min-w-0">
-        <p className="text-[13px] font-semibold text-[#F5F5F5]">{label}</p>
+        <p className="text-[13px] font-semibold text-[var(--text-primary)]">{label}</p>
         {detail && (
           <p className={`text-[11px] mt-0.5 ${cfg.text}`}>{detail}</p>
         )}
       </div>
       <div className="shrink-0">
-        {status === CHECK_RUNNING && <Loader2 className="h-4 w-4 animate-spin text-[#8B5CF6]" />}
+        {status === CHECK_RUNNING && <Loader2 className="h-4 w-4 animate-spin text-[#F97316]" />}
         {status === CHECK_PASS && <CheckCircle2 className="h-4 w-4 text-[#22C55E]" />}
         {status === CHECK_FAIL && <XCircle className="h-4 w-4 text-[#EF4444]" />}
       </div>
@@ -288,10 +288,10 @@ export default function PreJoinCheck({
         {/* Privacy disclosure */}
         <div className="rounded-xl border border-[rgba(139,92,246,0.25)] bg-[rgba(139,92,246,0.05)] p-5 space-y-3">
           <div className="flex items-center gap-2">
-            <Eye className="h-4 w-4 text-[#8B5CF6]" />
-            <h4 className="text-[13px] font-bold text-[#F5F5F5]">Camera Monitoring Notice</h4>
+            <Eye className="h-4 w-4 text-[#F97316]" />
+            <h4 className="text-[13px] font-bold text-[var(--text-primary)]">Camera Monitoring Notice</h4>
           </div>
-          <div className="space-y-2 text-[12px] text-[#A1A1AA] leading-relaxed">
+          <div className="space-y-2 text-[12px] text-[var(--text-secondary)] leading-relaxed">
             <p>MockMate uses camera monitoring during this interview session to verify:</p>
             <ul className="list-disc list-inside space-y-1 pl-1">
               <li>You are present and visible in the camera frame</li>
@@ -299,9 +299,9 @@ export default function PreJoinCheck({
               <li>The person visible is consistent with your enrolled profile</li>
             </ul>
             <p className="pt-1">
-              <span className="font-semibold text-[#F5F5F5]">Your camera feed is processed locally</span> in
+              <span className="font-semibold text-[var(--text-primary)]">Your camera feed is processed locally</span> in
               your browser — no video is uploaded to our servers. Three confirmed violations
-              will flag this session for <span className="font-semibold text-[#F5F5F5]">manual review only</span>,
+              will flag this session for <span className="font-semibold text-[var(--text-primary)]">manual review only</span>,
               not automatic disqualification.
             </p>
           </div>
@@ -311,7 +311,7 @@ export default function PreJoinCheck({
           <button
             type="button"
             onClick={onCancel}
-            className="flex-1 rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#101010] py-2.5 text-xs font-semibold text-[#A1A1AA] hover:bg-[#151515] hover:text-[#F5F5F5] transition"
+            className="flex-1 rounded-xl border border-[var(--border-subtle)] bg-[var(--card-bg)] py-2.5 text-xs font-semibold text-[var(--text-secondary)] hover:bg-[var(--card-elevated)] hover:text-[var(--text-primary)] transition"
           >
             Cancel
           </button>
@@ -331,7 +331,7 @@ export default function PreJoinCheck({
   return (
     <div className="space-y-5">
       {/* Live camera preview */}
-      <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-[#000000] border border-[rgba(255,255,255,0.08)]">
+      <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-[var(--bg-void)] border border-[var(--border-subtle)]">
         <video
           ref={videoRef}
           autoPlay
@@ -340,24 +340,24 @@ export default function PreJoinCheck({
           className="h-full w-full object-cover"
         />
         {checks.camera !== CHECK_PASS && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0A0A0A]/90">
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-[var(--bg-surface)]/90">
             {running ? (
-              <Loader2 className="h-8 w-8 animate-spin text-[#8B5CF6] mb-2" />
+              <Loader2 className="h-8 w-8 animate-spin text-[#F97316] mb-2" />
             ) : (
-              <VideoOff className="h-8 w-8 text-[#71717A] mb-2" />
+              <VideoOff className="h-8 w-8 text-[var(--text-muted)] mb-2" />
             )}
-            <p className="text-xs text-[#71717A]">
+            <p className="text-xs text-[var(--text-muted)]">
               {running ? "Starting camera..." : "Camera not available"}
             </p>
           </div>
         )}
-        <div className="absolute bottom-2 left-2 rounded-md border border-[rgba(255,255,255,0.08)] bg-[#000000]/80 px-2 py-1 text-[10px] font-semibold text-[#A1A1AA]">
+        <div className="absolute bottom-2 left-2 rounded-md border border-[var(--border-subtle)] bg-[rgba(0,0,0,0.80)] px-2 py-1 text-[10px] font-semibold text-[var(--text-secondary)]">
           Verification Preview
         </div>
       </div>
 
       {/* Check list */}
-      <div className="rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#101010] px-4 py-2 divide-y divide-[rgba(255,255,255,0.06)]">
+      <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--card-bg)] px-4 py-2 divide-y divide-[var(--border-subtle)]">
         <CheckRow label="Camera" status={checks.camera} detail={checkDetails.camera} />
         <CheckRow label="Microphone" status={checks.microphone} detail={checkDetails.microphone} />
         <CheckRow label="One person detected" status={checks.presence} detail={checkDetails.presence} />
@@ -379,7 +379,7 @@ export default function PreJoinCheck({
         href="chrome://settings/content/camera"
         target="_blank"
         rel="noreferrer"
-        className="flex items-center gap-1.5 text-[11px] text-[#71717A] hover:text-[#A1A1AA] transition"
+        className="flex items-center gap-1.5 text-[11px] text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition"
         onClick={(e) => e.preventDefault() || window.open("chrome://settings/content/camera")}
       >
         <ExternalLink className="h-3 w-3" />
@@ -391,7 +391,7 @@ export default function PreJoinCheck({
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#101010] py-2.5 text-xs font-semibold text-[#A1A1AA] hover:bg-[#151515] hover:text-[#F5F5F5] transition"
+          className="flex-1 rounded-xl border border-[var(--border-subtle)] bg-[var(--card-bg)] py-2.5 text-xs font-semibold text-[var(--text-secondary)] hover:bg-[var(--card-elevated)] hover:text-[var(--text-primary)] transition"
         >
           Cancel
         </button>
@@ -400,7 +400,7 @@ export default function PreJoinCheck({
           <button
             type="button"
             onClick={runChecks}
-            className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-[rgba(255,255,255,0.1)] bg-[#151515] py-2.5 text-xs font-bold text-[#F5F5F5] hover:bg-[#1A1A1A] transition"
+            className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-[var(--border-subtle)] bg-[var(--card-elevated)] py-2.5 text-xs font-bold text-[var(--text-primary)] hover:bg-[var(--hover-bg)] transition"
           >
             <RefreshCw className="h-3.5 w-3.5" />
             Retry Checks
@@ -422,7 +422,7 @@ export default function PreJoinCheck({
           <button
             type="button"
             disabled
-            className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#101010] py-2.5 text-xs font-bold text-[#71717A] opacity-70 cursor-not-allowed"
+            className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-[var(--border-subtle)] bg-[var(--card-bg)] py-2.5 text-xs font-bold text-[var(--text-muted)] opacity-70 cursor-not-allowed"
           >
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
             Running Checks...

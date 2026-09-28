@@ -8,9 +8,9 @@ const {
   handleRazorpayWebhook,
 } = require("../services/subscription.service");
 
-//  Create subscription
+// Create subscription / order
 const createSubscriptionController = asyncHandler(async (req, res) => {
-  const userId = req.user.id;
+  const userId = req.user._id || req.user.id;
 
   const subscription = await createSubscription(userId);
 
@@ -21,9 +21,9 @@ const createSubscriptionController = asyncHandler(async (req, res) => {
   });
 });
 
-//  Get current user's subscription
+// Get current user's subscription
 const getSubscriptionController = asyncHandler(async (req, res) => {
-  const userId = req.user.id;
+  const userId = req.user._id || req.user.id;
 
   const subscription = await getUserSubscription(userId);
 
@@ -33,12 +33,12 @@ const getSubscriptionController = asyncHandler(async (req, res) => {
   });
 });
 
-//  Verify Razorpay payment
+// Verify Razorpay payment
 const verifyPaymentController = asyncHandler(async (req, res) => {
-  const { razorpayPaymentId, razorpaySubscriptionId, razorpaySignature } =
+  const { razorpayPaymentId, razorpaySubscriptionId, razorpayOrderId, razorpaySignature } =
     req.body || {};
 
-  if (!razorpayPaymentId || !razorpaySubscriptionId || !razorpaySignature) {
+  if (!razorpayPaymentId || (!razorpaySubscriptionId && !razorpayOrderId) || !razorpaySignature) {
     return res.status(400).json({
       success: false,
       message: "Payment verification details are required",
@@ -46,9 +46,10 @@ const verifyPaymentController = asyncHandler(async (req, res) => {
   }
 
   const subscription = await verifyPayment({
-    userId: req.user._id,
+    userId: req.user._id || req.user.id,
     razorpayPaymentId,
     razorpaySubscriptionId,
+    razorpayOrderId,
     razorpaySignature,
   });
 
@@ -59,9 +60,9 @@ const verifyPaymentController = asyncHandler(async (req, res) => {
   });
 });
 
-//  Cancel subscription
+// Cancel subscription
 const cancelSubscriptionController = asyncHandler(async (req, res) => {
-  const userId = req.user.id;
+  const userId = req.user._id || req.user.id;
 
   const subscription = await cancelSubscription(userId);
 
@@ -72,7 +73,7 @@ const cancelSubscriptionController = asyncHandler(async (req, res) => {
   });
 });
 
-//  Razorpay Webhook Listener
+// Razorpay Webhook Listener
 const razorpayWebhookController = asyncHandler(async (req, res) => {
   const signature =
     req.headers["x-razorpay-signature"] || req.headers["X-Razorpay-Signature"];

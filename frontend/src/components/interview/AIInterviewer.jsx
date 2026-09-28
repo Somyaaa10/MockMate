@@ -17,22 +17,24 @@ export default function AIInterviewer({
   const isSpeaking = interviewState === "AI_SPEAKING";
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-[#262626] bg-[#0A0A0A] p-6 sm:p-8 backdrop-blur-xl text-center space-y-6 transition duration-300 hover:border-[#404040] hover:bg-[#111111]">
+    <div className="relative overflow-hidden rounded-2xl border border-[var(--strong-line)] bg-[var(--bg-surface)] p-6 sm:p-8 backdrop-blur-xl text-center space-y-6 transition duration-300 hover:border-[var(--strong-line-2)] hover:bg-[var(--card-bg-2)]">
       {/* Top Metadata Badges */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#1A1A1A] pb-4 text-xs font-semibold text-[#A1A1A1]">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--faint-line)] pb-4 text-xs font-semibold text-[var(--text-secondary-2)]">
         <div className="flex items-center gap-2">
-          <span className="rounded-full border border-[#262626] bg-[#171717] px-3 py-1 text-[#FFFFFF] font-bold">
+          <span className="rounded-full border border-[var(--strong-line)] bg-[var(--chip-bg)] px-3 py-1 text-[var(--text-primary-2)] font-bold">
             {targetRole || "Software Developer"}
           </span>
-          <span className="rounded-full border border-[#262626] bg-[#171717] px-2.5 py-1 text-[#A1A1A1]">
-            {experienceLevel || "Mid Level"}
-          </span>
+          {experienceLevel && (
+            <span className="rounded-full border border-[var(--strong-line)] bg-[var(--chip-bg)] px-2.5 py-1 text-[var(--text-secondary-2)]">
+              {experienceLevel}
+            </span>
+          )}
         </div>
 
         <button
           type="button"
           onClick={() => setShowHistory(!showHistory)}
-          className="flex items-center gap-1.5 rounded-lg border border-[#262626] bg-[#171717] px-3 py-1 text-xs text-[#A1A1A1] hover:bg-[#262626] hover:text-[#FFFFFF] transition"
+          className="flex items-center gap-1.5 rounded-lg border border-[var(--strong-line)] bg-[var(--chip-bg)] px-3 py-1 text-xs text-[var(--text-secondary-2)] hover:bg-[var(--strong-line)] hover:text-[var(--text-primary-2)] transition"
         >
           <MessageSquareText className="h-3.5 w-3.5" />
           <span>{showHistory ? "Hide Transcript" : "View Live Log"}</span>
@@ -42,20 +44,20 @@ export default function AIInterviewer({
       {/* Avatar Orb & Audio Waveform Visualizer */}
       <div className="relative mx-auto flex h-32 w-32 items-center justify-center">
         {/* Glow ambient background */}
-        <div className="absolute -inset-4 rounded-full bg-gradient-to-r from-purple-600/30 to-pink-600/30 blur-2xl animate-pulse-slow" />
+        <div className="absolute -inset-4 rounded-full bg-gradient-to-r from-orange-600/30 to-pink-600/30 blur-2xl animate-pulse-slow" />
 
         {isSpeaking && (
-          <div className="absolute -inset-2 rounded-full border-2 border-purple-500/40 animate-ping duration-1000" />
+          <div className="absolute -inset-2 rounded-full border-2 border-orange-500/40 animate-ping duration-1000" />
         )}
 
         {interviewState === "PROCESSING" && (
-          <div className="absolute -inset-3 rounded-full border-2 border-dashed border-purple-400 animate-spin" />
+          <div className="absolute -inset-3 rounded-full border-2 border-dashed border-orange-400 animate-spin" />
         )}
 
-        <div className="relative flex h-24 w-24 items-center justify-center rounded-full border border-purple-500/30 bg-[#0A0A0A] shadow-2xl shadow-purple-500/20">
-          <div className="flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-[#111111] to-[#0A0A0A]">
+        <div className="relative flex h-24 w-24 items-center justify-center rounded-full border border-orange-500/30 bg-[var(--bg-surface)] shadow-2xl shadow-orange-500/20">
+          <div className="flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-[var(--card-bg-2)] to-[var(--bg-surface)]">
             <Bot
-              className={`h-10 w-10 text-purple-400 transition-transform ${
+              className={`h-10 w-10 text-orange-400 transition-transform ${
                 isSpeaking ? "scale-110" : ""
               }`}
             />
@@ -66,24 +68,24 @@ export default function AIInterviewer({
       {/* Audio Waveform Bars (Active during AI Speech) */}
       {isSpeaking && (
         <div className="flex items-center justify-center gap-1 h-6">
-          <span className="w-1 bg-purple-400 rounded-full animate-wave-1" />
+          <span className="w-1 bg-orange-400 rounded-full animate-wave-1" />
           <span className="w-1 bg-pink-400 rounded-full animate-wave-2" />
-          <span className="w-1 bg-purple-500 rounded-full animate-wave-3" />
+          <span className="w-1 bg-orange-500 rounded-full animate-wave-3" />
           <span className="w-1 bg-pink-500 rounded-full animate-wave-4" />
-          <span className="w-1 bg-purple-400 rounded-full animate-wave-2" />
+          <span className="w-1 bg-orange-400 rounded-full animate-wave-2" />
         </div>
       )}
 
       {/* Interviewer State Badge */}
-      <div className="inline-flex items-center gap-2 rounded-full border border-purple-500/30 bg-purple-500/10 px-4 py-1.5 text-xs font-bold text-purple-300 backdrop-blur-md">
+      <div className="inline-flex items-center gap-2 rounded-full border border-orange-500/30 bg-orange-500/10 px-4 py-1.5 text-xs font-bold text-orange-400 backdrop-blur-md">
         {isSpeaking ? (
           <>
-            <span className="h-2 w-2 rounded-full bg-purple-400 animate-ping" />
+            <span className="h-2 w-2 rounded-full bg-orange-400 animate-ping" />
             <span>🔊 AI Interviewer is speaking...</span>
           </>
         ) : interviewState === "GREETING" ? (
           <>
-            <span className="h-2 w-2 rounded-full bg-purple-400 animate-pulse" />
+            <span className="h-2 w-2 rounded-full bg-orange-400 animate-pulse" />
             <span>👋 Welcoming candidate...</span>
           </>
         ) : interviewState === "LISTENING" ? (
@@ -93,8 +95,8 @@ export default function AIInterviewer({
           </>
         ) : interviewState === "PROCESSING" ? (
           <>
-            <Sparkles className="h-3.5 w-3.5 animate-spin text-purple-300" />
-            <span>Evaluating answer & deciding next dynamic question...</span>
+            <Sparkles className="h-3.5 w-3.5 animate-spin text-orange-400" />
+            <span>AI interviewer is listening & thinking...</span>
           </>
         ) : (
           <>
@@ -115,8 +117,8 @@ export default function AIInterviewer({
 
       {/* AI Speech Text Display */}
       {showHistory ? (
-        <div className="mx-auto max-w-2xl rounded-xl border border-[#262626] bg-[#000000] p-4 text-left space-y-3 max-h-60 overflow-y-auto font-mono text-xs">
-          <p className="text-[10px] uppercase font-bold text-[#737373] mb-2 tracking-wider">
+        <div className="mx-auto max-w-2xl rounded-xl border border-[var(--strong-line)] bg-[var(--bg-void)] p-4 text-left space-y-3 max-h-60 overflow-y-auto font-mono text-xs">
+          <p className="text-[10px] uppercase font-bold text-[var(--text-muted-2)] mb-2 tracking-wider">
             Live Interview Conversation Log
           </p>
           {conversationHistory.length > 0 ? (
@@ -125,8 +127,8 @@ export default function AIInterviewer({
                 key={idx}
                 className={`p-2.5 rounded-lg border ${
                   item.speaker === "ai"
-                    ? "border-[#262626] bg-[#111111] text-[#FAFAFA]"
-                    : "border-[#262626] bg-[#0A0A0A] text-[#A1A1A1]"
+                    ? "border-[var(--strong-line)] bg-[var(--card-bg-2)] text-[var(--text-primary-3)]"
+                    : "border-[var(--strong-line)] bg-[var(--bg-surface)] text-[var(--text-secondary-2)]"
                 }`}
               >
                 <div className="flex items-center justify-between text-[10px] font-bold uppercase mb-1">
@@ -139,17 +141,17 @@ export default function AIInterviewer({
               </div>
             ))
           ) : (
-            <p className="text-[#737373] italic">No conversation log recorded yet.</p>
+            <p className="text-[var(--text-muted-2)] italic">No conversation log available yet.</p>
           )}
         </div>
       ) : (
         <div className="mx-auto max-w-2xl space-y-2">
           {greeting && (
-            <p className="text-xs text-[#A1A1A1] italic bg-[#111111] rounded-xl p-3 border border-[#262626]">
+            <p className="text-xs text-[var(--text-secondary-2)] italic bg-[var(--card-bg-2)] rounded-xl p-3 border border-[var(--strong-line)]">
               "{greeting}"
             </p>
           )}
-          <h2 className="text-lg font-bold text-[#FAFAFA] leading-relaxed sm:text-xl tracking-wide">
+          <h2 className="text-lg font-bold text-[var(--text-primary-3)] leading-relaxed sm:text-xl tracking-wide">
             "{question}"
           </h2>
         </div>
@@ -161,10 +163,10 @@ export default function AIInterviewer({
           type="button"
           onClick={onReplayQuestion}
           disabled={isSpeaking}
-          className="inline-flex items-center gap-2 rounded-xl border border-[#262626] bg-[#171717] px-4 py-2 text-xs font-semibold text-[#A1A1A1] transition hover:bg-[#262626] hover:text-[#FFFFFF] disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-xl border border-[var(--strong-line)] bg-[var(--chip-bg)] px-4 py-2 text-xs font-semibold text-[var(--text-secondary-2)] transition hover:bg-[var(--strong-line)] hover:text-[var(--text-primary-2)] disabled:opacity-50"
           title="Replay AI voice output"
         >
-          <Volume2 className="h-4 w-4 text-[#FFFFFF]" />
+          <Volume2 className="h-4 w-4 text-[var(--text-primary-2)]" />
           <span>Replay AI Voice</span>
         </button>
       </div>

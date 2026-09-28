@@ -23,27 +23,27 @@ export default function IntegrityEndedModal({
   const reasonLabel = VIOLATION_LABELS[violationType] || "Camera integrity violation";
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#000000]/85 p-4 backdrop-blur-md">
-      <div className="w-full max-w-md overflow-hidden rounded-2xl border border-[#EF4444]/30 bg-[#0A0A0A] p-8 shadow-2xl text-center animate-slideUp">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[rgba(0,0,0,0.85)] p-4 backdrop-blur-md">
+      <div className="w-full max-w-md overflow-hidden rounded-2xl border border-[#EF4444]/30 bg-[var(--bg-surface)] p-8 shadow-2xl text-center animate-slideUp">
         {/* Icon */}
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-[#EF4444]/30 bg-[#EF4444]/10 mb-6">
           <ShieldAlert className="h-8 w-8 text-[#EF4444]" />
         </div>
 
         {/* Title */}
-        <h2 className="text-xl font-extrabold text-[#F5F5F5]">
+        <h2 className="text-xl font-extrabold text-[var(--text-primary)]">
           Interview Integrity Review
         </h2>
-        <p className="mt-2 text-sm text-[#A1A1AA] leading-relaxed">
+        <p className="mt-2 text-sm text-[var(--text-secondary)] leading-relaxed">
           This session has been flagged after{" "}
-          <span className="font-bold text-[#F5F5F5]">{warningCount}</span> confirmed
+          <span className="font-bold text-[var(--text-primary)]">{warningCount}</span> confirmed
           camera integrity violations.
         </p>
 
         {/* Warning count */}
-        <div className="mt-6 rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#101010] p-4 space-y-3">
+        <div className="mt-6 rounded-xl border border-[var(--border-subtle)] bg-[var(--card-bg)] p-4 space-y-3">
           <div className="flex items-center justify-between text-xs">
-            <span className="text-[#71717A] font-medium">Violations</span>
+            <span className="text-[var(--text-muted)] font-medium">Violations</span>
             <span className="font-bold text-[#EF4444]">
               {warningCount} / {maxWarnings}
             </span>
@@ -53,14 +53,14 @@ export default function IntegrityEndedModal({
               <div
                 key={i}
                 className={`h-2 flex-1 rounded-full ${
-                  i < warningCount ? "bg-[#EF4444]" : "bg-[#262626]"
+                  i < warningCount ? "bg-[#EF4444]" : "bg-[var(--strong-line)]"
                 }`}
               />
             ))}
           </div>
           <div className="flex items-center justify-between text-xs">
-            <span className="text-[#71717A] font-medium">Reason</span>
-            <span className="font-semibold text-[#F5F5F5]">{reasonLabel}</span>
+            <span className="text-[var(--text-muted)] font-medium">Reason</span>
+            <span className="font-semibold text-[var(--text-primary)]">{reasonLabel}</span>
           </div>
         </div>
 
@@ -70,8 +70,8 @@ export default function IntegrityEndedModal({
             <AlertTriangle className="h-4 w-4 text-[#F59E0B] mt-0.5 shrink-0" />
             <div>
               <p className="text-[12px] font-bold text-[#F59E0B]">Manual Review</p>
-              <p className="text-[11px] text-[#A1A1AA] mt-0.5 leading-relaxed">
-                You will <span className="font-semibold text-[#F5F5F5]">not</span> be
+              <p className="text-[11px] text-[var(--text-secondary)] mt-0.5 leading-relaxed">
+                You will <span className="font-semibold text-[var(--text-primary)]">not</span> be
                 automatically disqualified. This session has been flagged for manual
                 review only. Your interview responses and score have been preserved.
               </p>
@@ -83,13 +83,13 @@ export default function IntegrityEndedModal({
         <button
           type="button"
           onClick={onReturnDashboard}
-          className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#FFFFFF] py-3.5 text-sm font-bold text-[#000000] shadow-sm transition hover:bg-[#F5F5F5] active:bg-[#E5E5E5]"
+          className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--inv-bg)] py-3.5 text-sm font-bold text-[var(--inv-text)] shadow-sm transition hover:bg-[var(--inv-hover)] active:bg-[var(--inv-hover-2)]"
         >
           <LayoutDashboard className="h-4 w-4" />
           Return to Dashboard
         </button>
 
-        <p className="mt-3 text-[10px] text-[#71717A]">
+        <p className="mt-3 text-[10px] text-[var(--text-muted)]">
           Your data has been saved. You can review your session from the dashboard.
         </p>
       </div>

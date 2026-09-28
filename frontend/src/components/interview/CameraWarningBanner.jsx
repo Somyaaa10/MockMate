@@ -67,14 +67,14 @@ export default function CameraWarningBanner({
           <p className={`text-xs font-bold ${isLastWarning ? "text-[#EF4444]" : config.color}`}>
             ⚠ {config.title}
           </p>
-          <p className="text-[11px] text-[#A1A1AA] mt-0.5 leading-relaxed">
+          <p className="text-[11px] text-[var(--text-secondary)] mt-0.5 leading-relaxed">
             {message}
           </p>
           {violationType === "CAMERA_DISABLED" && onCameraEnable && (
             <button
               type="button"
               onClick={onCameraEnable}
-              className="mt-1.5 text-[11px] font-semibold text-[#8B5CF6] hover:text-[#A78BFA] underline"
+              className="mt-1.5 text-[11px] font-semibold text-[#F97316] hover:text-[var(--text-accent)] underline"
             >
               Turn Camera On
             </button>

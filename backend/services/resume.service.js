@@ -21,8 +21,18 @@ const uploadResume = async ({ userId, file }) => {
 
   await parser.destroy();
 
-  if (!extractedText) {
-    throw new ApiError(400, "Could not extract text from resume");
+  if (!extractedText || extractedText.length < 30) {
+    throw new ApiError(400, "The uploaded document contains insufficient text to be analyzed as a resume.");
+  }
+
+  // Validate document is actually a candidate resume
+  const validation = await aiService.validateIsResume(extractedText);
+  if (!validation.isResume) {
+    throw new ApiError(
+      400,
+      validation.rejectionReason ||
+        "The uploaded document is not a valid resume/CV. Please upload a legitimate candidate resume file."
+    );
   }
 
   // 2. Upload PDF to Cloudinary
@@ -158,6 +168,20 @@ const analyzeResume = async (resumeId, userId) => {
   resume.analyzedAt = new Date();
 
   await resume.save();
+
+  try {
+    const notificationService = require("./notification.service");
+    await notificationService.createNotification({
+      userId,
+      type: "RESUME_ANALYSIS_COMPLETED",
+      title: "Resume Analysis Complete",
+      message: `ATS score analysis for "${resume.fileName}" is complete (${resume.atsScore}/100).`,
+      link: `/dashboard`,
+      metadata: { resumeId: resume._id, atsScore: resume.atsScore },
+    });
+  } catch (notifErr) {
+    console.warn("⚠️ Resume notification trigger warning:", notifErr.message);
+  }
 
   return resume;
 };

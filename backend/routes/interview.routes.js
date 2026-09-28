@@ -9,6 +9,7 @@ const {
   createInterview,
   startInterview,
   submitAnswer,
+  completeInterview,
   getInterviewById,
   getUserInterviews,
   getInterviewReport,
@@ -29,6 +30,9 @@ router.get("/:id", protect, getInterviewById);
 
 // Start interview
 router.post("/:id/start", protect, startInterview);
+
+// Complete interview
+router.post("/:id/complete", protect, completeInterview);
 
 // Submit answer
 router.post("/:id/answer", protect, aiLimiter, submitAnswer);

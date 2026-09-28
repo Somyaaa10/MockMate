@@ -11,11 +11,12 @@ const aiRoutes = require("./routes/ai.routes");
 const interviewRoutes = require("./routes/interview.routes");
 const dashboardRoutes = require("./routes/dashboard.routes");
 const peerInterviewRoutes = require("./routes/peerInterview.routes");
-const recordingRoutes = require("./routes/recording.routes");
 const subscriptionRoutes = require("./routes/subscription.routes");
+const notificationRoutes = require("./routes/notification.routes");
 const redisTestRoutes = require("./routes/test.redis.routes");
 const whatsappRoutes = require("./routes/whatsapp.routes");
 
+const { corsOptions } = require("./config/cors");
 const errorHandler = require("./middleware/error.middleware");
 
 const app = express();
@@ -32,9 +33,11 @@ app.use(
   }),
 );
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(helmet());
-app.use(morgan("dev"));
+if (process.env.NODE_ENV !== "production" && process.env.NODE_ENV !== "test") {
+  app.use(morgan("dev"));
+}
 app.use(compression());
 app.use(cookieParser());
 
@@ -45,9 +48,11 @@ app.use("/api/v1/ai", aiRoutes);
 app.use("/api/v1/interviews", interviewRoutes);
 app.use("/api/v1/dashboard", dashboardRoutes);
 app.use("/api/v1/peer-interviews", peerInterviewRoutes);
-app.use("/api/v1/recordings", recordingRoutes);
 app.use("/api/v1/subscriptions", subscriptionRoutes);
-app.use("/api/v1/test-redis", redisTestRoutes);
+app.use("/api/v1/notifications", notificationRoutes);
+if (process.env.NODE_ENV !== "production") {
+  app.use("/api/v1/test-redis", redisTestRoutes);
+}
 app.use("/api/v1/whatsapp", whatsappRoutes);
 
 // Health check route

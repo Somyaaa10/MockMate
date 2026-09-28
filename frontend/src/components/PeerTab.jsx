@@ -2,8 +2,6 @@ import { useEffect, useState } from "react";
 import {
   Users,
   Video,
-  ExternalLink,
-  Trash2,
   Loader2,
   AlertCircle,
   CheckCircle2,
@@ -34,9 +32,9 @@ const formatDate = (dateStr) => {
 };
 
 const STATUS_COLORS = {
-  waiting: "text-[#F59E0B] bg-[#F59E0B]/08 border-[#F59E0B]/20",
-  active: "text-[#22C55E] bg-[#22C55E]/08 border-[#22C55E]/20",
-  completed: "text-[#71717A] bg-[rgba(255,255,255,0.04)] border-[rgba(255,255,255,0.08)]",
+  waiting: "text-[#D97706] dark:text-[#F59E0B] bg-[#F59E0B]/10 border-[#F59E0B]/25",
+  active: "text-[#059669] dark:text-[#22C55E] bg-[#22C55E]/10 border-[#22C55E]/25",
+  completed: "text-[var(--text-muted)] bg-[var(--overlay-wash)] border-[var(--border-subtle)]",
 };
 
 function PeerTab() {
@@ -44,10 +42,8 @@ function PeerTab() {
   const navigate = useNavigate();
 
   const [peerInterviews, setPeerInterviews] = useState([]);
-  const [recordings, setRecordings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [deletingId, setDeletingId] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
 
   useEffect(() => {
@@ -58,17 +54,11 @@ function PeerTab() {
         setLoading(true);
         setError(null);
 
-        const [peerRes, recRes] = await Promise.all([
-          axios.get(`${API_BASE_URL}/peer-interviews`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          axios.get(`${API_BASE_URL}/recordings`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-        ]);
+        const peerRes = await axios.get(`${API_BASE_URL}/peer-interviews`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
         setPeerInterviews(Array.isArray(peerRes.data?.data) ? peerRes.data.data : []);
-        setRecordings(Array.isArray(recRes.data?.data) ? recRes.data.data : []);
       } catch (err) {
         console.error("Failed to fetch peer history:", err);
         setError("Failed to load peer interview history.");
@@ -80,21 +70,6 @@ function PeerTab() {
     fetchData();
   }, [token]);
 
-  const handleDeleteRecording = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this recording?")) return;
-    setDeletingId(id);
-    try {
-      await axios.delete(`${API_BASE_URL}/recordings/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setRecordings((prev) => prev.filter((r) => r._id !== id));
-    } catch (err) {
-      alert(err.response?.data?.message || "Failed to delete recording.");
-    } finally {
-      setDeletingId(null);
-    }
-  };
-
   const handleCopyLink = (roomCode, id) => {
     const url = `${window.location.origin}/peer/${roomCode}`;
     navigator.clipboard.writeText(url);
@@ -105,7 +80,7 @@ function PeerTab() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-[#8B5CF6]" />
+        <Loader2 className="h-6 w-6 animate-spin text-[#F97316]" />
       </div>
     );
   }
@@ -115,8 +90,8 @@ function PeerTab() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-[#F5F5F5]">Peer Practice</h1>
-          <p className="text-[13px] text-[#A1A1AA] mt-0.5">
+          <h1 className="text-xl font-bold text-[var(--text-primary)]">Peer Practice</h1>
+          <p className="text-[13px] text-[var(--text-secondary)] mt-0.5">
             Practice with another candidate in a private interview room.
           </p>
         </div>
@@ -138,17 +113,17 @@ function PeerTab() {
 
       {/* Room list */}
       <div className="space-y-3">
-        <h2 className="text-[11px] font-semibold uppercase tracking-widest text-[#71717A]">
+        <h2 className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
           Your Interview Rooms
         </h2>
 
         {peerInterviews.length === 0 ? (
           <div className="saas-card rounded-2xl p-10 text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl border border-[rgba(255,255,255,0.07)] bg-[#151515] mb-4">
-              <Users className="h-5 w-5 text-[#71717A]" />
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl border border-[var(--border-subtle)] bg-[var(--card-elevated)] mb-4">
+              <Users className="h-5 w-5 text-[var(--text-muted)]" />
             </div>
-            <p className="text-[14px] font-semibold text-[#F5F5F5]">No interview rooms yet</p>
-            <p className="text-[13px] text-[#71717A] mt-1 mb-5">
+            <p className="text-[14px] font-semibold text-[var(--text-primary)]">No interview rooms yet</p>
+            <p className="text-[13px] text-[var(--text-muted)] mt-1 mb-5">
               Create a room and share the link with your interview partner.
             </p>
             <button
@@ -160,7 +135,7 @@ function PeerTab() {
             </button>
           </div>
         ) : (
-          <div className="saas-card rounded-2xl divide-y divide-[rgba(255,255,255,0.06)]">
+          <div className="saas-card rounded-2xl divide-y divide-[var(--border-subtle)]">
             {peerInterviews.map((room) => {
               const statusClass =
                 STATUS_COLORS[room.status] || STATUS_COLORS.waiting;
@@ -171,11 +146,11 @@ function PeerTab() {
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-[rgba(139,92,246,0.10)]">
-                      <Video className="h-4 w-4 text-[#8B5CF6]" />
+                      <Video className="h-4 w-4 text-[#F97316]" />
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-[13px] font-semibold text-[#F5F5F5] truncate">
+                        <p className="text-[13px] font-semibold text-[var(--text-primary)] truncate">
                           {room.title || "Peer Mock Session"}
                         </p>
                         <span
@@ -184,7 +159,7 @@ function PeerTab() {
                           {capitalize(room.status || "waiting")}
                         </span>
                       </div>
-                      <p className="text-[11px] text-[#71717A] mt-0.5 flex items-center gap-2">
+                      <p className="text-[11px] text-[var(--text-muted)] mt-0.5 flex items-center gap-2">
                         <span>{capitalize(room.interviewType)}</span>
                         <span>·</span>
                         <span>{capitalize(room.difficulty)}</span>
@@ -223,60 +198,6 @@ function PeerTab() {
           </div>
         )}
       </div>
-
-      {/* Recordings */}
-      {recordings.length > 0 && (
-        <div className="space-y-3">
-          <h2 className="text-[11px] font-semibold uppercase tracking-widest text-[#71717A]">
-            Saved Recordings
-          </h2>
-          <div className="saas-card rounded-2xl divide-y divide-[rgba(255,255,255,0.06)]">
-            {recordings.map((rec) => (
-              <div
-                key={rec._id}
-                className="flex items-center justify-between px-5 py-3.5 gap-4"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-[rgba(139,92,246,0.10)]">
-                    <Video className="h-3.5 w-3.5 text-[#8B5CF6]" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[13px] font-medium text-[#F5F5F5] truncate">
-                      {rec.title || "Interview Recording"}
-                    </p>
-                    <p className="text-[11px] text-[#71717A]">
-                      {rec.duration || "Recorded session"}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <a
-                    href={rec.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="btn-secondary flex h-8 w-8 items-center justify-center rounded-lg"
-                    title="Open recording"
-                  >
-                    <ExternalLink className="h-3.5 w-3.5" />
-                  </a>
-                  <button
-                    onClick={() => handleDeleteRecording(rec._id)}
-                    disabled={deletingId === rec._id}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#151515] text-[#71717A] hover:bg-[rgba(239,68,68,0.08)] hover:text-[#EF4444] hover:border-[rgba(239,68,68,0.20)] transition-colors disabled:opacity-50"
-                    title="Delete recording"
-                  >
-                    {deletingId === rec._id ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <Trash2 className="h-3.5 w-3.5" />
-                    )}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

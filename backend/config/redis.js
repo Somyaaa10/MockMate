@@ -1,13 +1,15 @@
 const { createClient } = require("redis");
 
+const redisUrl = process.env.REDIS_URL;
+
 const redisClient = createClient({
+  url: redisUrl,
   socket: {
-    host: process.env.REDIS_HOST || "127.0.0.1",
-    port: Number(process.env.REDIS_PORT) || 6379,
     reconnectStrategy: (retries) => {
       if (retries > 5) {
         return new Error("Redis connection retries exhausted");
       }
+
       return Math.min(retries * 200, 2000);
     },
   },
@@ -38,7 +40,11 @@ const connectRedis = async () => {
     await redisClient.connect();
     return redisClient.isReady;
   } catch (error) {
-    console.warn("⚠️ Redis unavailable; continuing without cache:", error.message);
+    console.warn(
+      "⚠️ Redis unavailable; continuing without cache:",
+      error.message
+    );
+
     return false;
   }
 };

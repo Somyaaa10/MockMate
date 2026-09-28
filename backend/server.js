@@ -11,6 +11,8 @@ const registerAIInterviewSocket = require("./sockets/aiInterview.socket");
 // Reset rate limiter for test suite
 const { connectRedis } = require("./config/redis");
 
+const { corsOriginDelegate } = require("./config/cors");
+
 const PORT = process.env.PORT || 5000;
 
 // Connect Database
@@ -25,7 +27,7 @@ const server = http.createServer(app);
 // Initialize Socket.IO
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: corsOriginDelegate,
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -54,9 +56,18 @@ io.use((socket, next) => {
   }
 });
 
+const { setNotificationIO } = require("./services/notification.service");
+setNotificationIO(io);
+
 // Socket.IO connection
 io.on("connection", (socket) => {
   console.log("🔌 Socket connected:", socket.id);
+
+  if (socket.userId) {
+    const userRoom = `user:${socket.userId.toString()}`;
+    socket.join(userRoom);
+    console.log(`🔐 Socket ${socket.id} joined private notification room: ${userRoom}`);
+  }
 
   registerPeerInterviewSocket(io, socket);
   registerAIInterviewSocket(io, socket);
@@ -66,7 +77,10 @@ io.on("connection", (socket) => {
   });
 });
 
+const { logSmtpDiagnostics } = require("./services/email.service");
+
 // Start server
 server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
+  logSmtpDiagnostics();
 });

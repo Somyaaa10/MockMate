@@ -104,10 +104,24 @@ const getInterviewReport = asyncHandler(async (req, res) => {
     );
 });
 
+const completeInterview = asyncHandler(async (req, res) => {
+  const result = await interviewService.completeInterview(
+    req.params.id,
+    req.user._id,
+  );
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, result, "Interview completed and report generated successfully"),
+    );
+});
+
 module.exports = {
   createInterview,
   startInterview,
   submitAnswer,
+  completeInterview,
   getInterviewById,
   getUserInterviews,
   getInterviewReport,

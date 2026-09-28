@@ -121,9 +121,9 @@ export default function SpeechRecognition({
   const isAiSpeaking = interviewState === "AI_SPEAKING";
 
   return (
-    <div className="rounded-2xl border border-[#262626] bg-[#0A0A0A] p-6 backdrop-blur-xl space-y-4">
+    <div className="rounded-2xl border border-[var(--strong-line)] bg-[var(--bg-surface)] p-6 backdrop-blur-xl space-y-4">
       {/* Speech Recognition Controls & Status */}
-      <div className="flex items-center justify-between border-b border-[#1A1A1A] pb-4">
+      <div className="flex items-center justify-between border-b border-[var(--faint-line)] pb-4">
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -131,8 +131,8 @@ export default function SpeechRecognition({
             disabled={isAiSpeaking || isSubmitting}
             className={`relative flex h-12 w-12 items-center justify-center rounded-xl border transition ${
               isListening
-                ? "border-[#FFFFFF] bg-[#171717] text-[#FFFFFF] animate-pulse"
-                : "border-[#262626] bg-[#171717] text-[#A1A1A1] hover:bg-[#262626] hover:text-[#FFFFFF]"
+                ? "border-[var(--inv-bg)] bg-[var(--chip-bg)] text-[var(--text-primary-2)] animate-pulse"
+                : "border-[var(--strong-line)] bg-[var(--chip-bg)] text-[var(--text-secondary-2)] hover:bg-[var(--strong-line)] hover:text-[var(--text-primary-2)]"
             } disabled:opacity-50 disabled:cursor-not-allowed`}
             title={isListening ? "Stop Microphone" : "Start Speaking Answer"}
           >
@@ -140,14 +140,14 @@ export default function SpeechRecognition({
           </button>
 
           <div>
-            <h4 className="text-sm font-bold text-[#FAFAFA] leading-tight">
+            <h4 className="text-sm font-bold text-[var(--text-primary-3)] leading-tight">
               {isListening
                 ? "Listening to your response..."
                 : isAiSpeaking
                 ? "AI is speaking..."
                 : "Click microphone & answer verbally"}
             </h4>
-            <p className="text-xs text-[#A1A1A1] mt-0.5">
+            <p className="text-xs text-[var(--text-secondary-2)] mt-0.5">
               {isListening
                 ? "Speak clearly into your microphone"
                 : "MockMate automatically converts your speech to text"}
@@ -157,12 +157,12 @@ export default function SpeechRecognition({
 
         {/* Listening Waveform Bars Animation */}
         {isListening && (
-          <div className="flex items-center gap-1 h-6 px-3 py-1 rounded-full bg-[#171717] border border-[#262626]">
-            <span className="w-1 bg-[#FFFFFF] rounded-full h-3 animate-pulse" />
-            <span className="w-1 bg-[#FFFFFF] rounded-full h-5 animate-pulse delay-75" />
-            <span className="w-1 bg-[#FFFFFF] rounded-full h-4 animate-pulse delay-150" />
-            <span className="w-1 bg-[#FFFFFF] rounded-full h-6 animate-pulse delay-200" />
-            <span className="w-1 bg-[#FFFFFF] rounded-full h-3 animate-pulse delay-300" />
+          <div className="flex items-center gap-1 h-6 px-3 py-1 rounded-full bg-[var(--chip-bg)] border border-[var(--strong-line)]">
+            <span className="w-1 bg-[var(--inv-bg)] rounded-full h-3 animate-pulse" />
+            <span className="w-1 bg-[var(--inv-bg)] rounded-full h-5 animate-pulse delay-75" />
+            <span className="w-1 bg-[var(--inv-bg)] rounded-full h-4 animate-pulse delay-150" />
+            <span className="w-1 bg-[var(--inv-bg)] rounded-full h-6 animate-pulse delay-200" />
+            <span className="w-1 bg-[var(--inv-bg)] rounded-full h-3 animate-pulse delay-300" />
           </div>
         )}
       </div>
@@ -186,15 +186,15 @@ export default function SpeechRecognition({
       )}
 
       {/* Live Transcript Display Box */}
-      <div className="relative rounded-xl border border-[#262626] bg-[#000000] p-4">
+      <div className="relative rounded-xl border border-[var(--strong-line)] bg-[var(--bg-void)] p-4">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] uppercase font-bold tracking-wider text-[#737373]">
+          <span className="text-[10px] uppercase font-bold tracking-wider text-[var(--text-muted-2)]">
             Recognized Speech Transcript
           </span>
           <button
             type="button"
             onClick={() => setIsEditingText(!isEditingText)}
-            className="text-xs text-[#A1A1A1] hover:text-[#FFFFFF] flex items-center gap-1"
+            className="text-xs text-[var(--text-secondary-2)] hover:text-[var(--text-primary-2)] flex items-center gap-1"
           >
             {isEditingText ? (
               <>
@@ -213,20 +213,20 @@ export default function SpeechRecognition({
             rows={3}
             value={transcript}
             onChange={(e) => setTranscript(e.target.value)}
-            className="w-full rounded-lg border border-[#262626] bg-[#0A0A0A] p-2.5 text-xs text-[#FAFAFA] placeholder:text-[#737373] focus:border-[#FFFFFF] focus:outline-none"
+            className="w-full rounded-lg border border-[var(--strong-line)] bg-[var(--bg-surface)] p-2.5 text-xs text-[var(--text-primary-3)] placeholder:text-[var(--text-muted-2)] focus:border-[var(--inv-bg)] focus:outline-none"
             placeholder="Type or correct your answer here..."
           />
         ) : (
-          <div className="min-h-[60px] text-xs text-[#FAFAFA] leading-relaxed font-mono">
+          <div className="min-h-[60px] text-xs text-[var(--text-primary-3)] leading-relaxed font-mono">
             {transcript || interimTranscript ? (
               <>
                 <span>{transcript}</span>
                 {interimTranscript && (
-                  <span className="text-[#A1A1A1] italic"> {interimTranscript}</span>
+                  <span className="text-[var(--text-secondary-2)] italic"> {interimTranscript}</span>
                 )}
               </>
             ) : (
-              <span className="text-[#737373] italic">
+              <span className="text-[var(--text-muted-2)] italic">
                 Your spoken answer will appear here as you speak...
               </span>
             )}
@@ -243,7 +243,7 @@ export default function SpeechRecognition({
             setInterimTranscript("");
           }}
           disabled={isAiSpeaking || isSubmitting || (!transcript && !interimTranscript)}
-          className="text-xs font-medium text-[#737373] hover:text-[#FFFFFF] transition disabled:opacity-40"
+          className="text-xs font-medium text-[var(--text-muted-2)] hover:text-[var(--text-primary-2)] transition disabled:opacity-40"
         >
           Clear Answer
         </button>
@@ -255,10 +255,10 @@ export default function SpeechRecognition({
             isSubmitting ||
             !(transcript + " " + interimTranscript).trim()
           }
-          className="inline-flex items-center gap-2 rounded-xl bg-[#FFFFFF] border border-[#FFFFFF] px-6 py-3 text-xs font-bold text-[#000000] shadow-sm transition hover:bg-[#EDEDED] active:bg-[#D4D4D4] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-2 rounded-xl bg-[var(--inv-bg)] border border-[var(--inv-bg)] px-6 py-3 text-xs font-bold text-[var(--inv-text)] shadow-sm transition hover:bg-[var(--inv-hover-3)] active:bg-[var(--inv-hover-4)] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSubmitting ? (
-            <span>Evaluating answer...</span>
+            <span>Processing response...</span>
           ) : (
             <>
               <Sparkles className="h-4 w-4" />

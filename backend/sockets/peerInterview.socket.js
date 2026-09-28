@@ -76,6 +76,9 @@ const registerPeerInterviewSocket = (io, socket) => {
 
       socket.join(normalizedRoomCode);
       socket.roomCode = normalizedRoomCode;
+      if (data.displayName && typeof data.displayName === "string") {
+        socket.displayName = data.displayName.trim();
+      }
 
       console.log(
         `[SOCKET] Joined room: socketId=${socket.id} userId=${socket.userId} room=${normalizedRoomCode}`
@@ -84,12 +87,13 @@ const registerPeerInterviewSocket = (io, socket) => {
       socket.emit("room_joined", {
         roomCode: normalizedRoomCode,
         status: peerInterview.status,
-        participants: peerInterview.participants.length,
+        participants: Math.min(peerInterview.participants.length, 2),
       });
 
       socket.to(normalizedRoomCode).emit("participant_joined", {
         socketId: socket.id,
         userId: socket.userId,
+        displayName: socket.displayName || null,
       });
     } catch (error) {
       console.error("[SOCKET] join_room error:", error.message);
@@ -127,6 +131,7 @@ const registerPeerInterviewSocket = (io, socket) => {
         offer,
         senderUserId: socket.userId,
         senderSocketId: socket.id,
+        senderDisplayName: socket.displayName || data.senderDisplayName || null,
       });
     } catch (error) {
       console.error("[SOCKET] webrtc_offer error:", error.message);
@@ -160,6 +165,7 @@ const registerPeerInterviewSocket = (io, socket) => {
         answer,
         senderUserId: socket.userId,
         senderSocketId: socket.id,
+        senderDisplayName: socket.displayName || data.senderDisplayName || null,
       });
     } catch (error) {
       console.error("[SOCKET] webrtc_answer error:", error.message);

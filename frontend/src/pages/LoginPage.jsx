@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Lock, Mail, Crown } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Lock, Mail, Crown } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import ThemeToggle from "../components/common/ThemeToggle";
 
 function LoginPage() {
   const { login } = useAuth();
@@ -9,29 +10,41 @@ function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
+
+  const validate = () => {
+    const errs = {};
+    if (!email.trim()) {
+      errs.email = "Email address is required.";
+    } else if (!/\S+@\S+\.\S+/.test(email.trim())) {
+      errs.email = "Please enter a valid email address.";
+    }
+    if (!password) {
+      errs.password = "Password is required.";
+    }
+    setFieldErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     setError("");
 
-    if (!email.trim() || !password) {
-      setError("Please enter your email and password.");
+    if (!validate()) {
       return;
     }
 
     try {
       setLoading(true);
-
       await login(email.trim(), password);
-
       navigate("/dashboard");
-    } catch (error) {
+    } catch (err) {
       setError(
-        error.response?.data?.message ||
-          "Login failed. Please check your credentials.",
+        err.response?.data?.message || "Invalid email or password. Please try again."
       );
     } finally {
       setLoading(false);
@@ -39,191 +52,164 @@ function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#050505] text-[#F5F5F5] relative overflow-hidden login-bg-glow selection:bg-purple-500/30 selection:text-white">
-      <div className="flex min-h-screen">
-        {/* Left Section */}
-        <section className="relative hidden overflow-hidden border-r border-[rgba(255,255,255,0.08)] bg-[#050505] lg:flex lg:w-1/2">
-          <div className="relative z-10 flex w-full flex-col justify-between p-12 auth-fade-left">
-            {/* Logo */}
-            <Link to="/" className="flex items-center gap-3 group">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#111113] shadow-sm text-[#8B5CF6] transition duration-200 group-hover:border-[rgba(139,92,246,0.35)] group-hover:shadow-[0_0_15px_rgba(139,92,246,0.2)]">
-                <Crown className="h-5 w-5" />
-              </div>
+    <main className="min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)] relative flex flex-col items-center justify-center px-4 py-8 sm:py-12 login-bg-glow selection:bg-orange-500/30 selection:text-white">
+      <ThemeToggle className="absolute right-4 top-4 z-50 sm:right-6 sm:top-6" />
 
-              <span className="text-2xl font-bold text-[#F5F5F5] transition group-hover:text-white">
-                MockMate
-              </span>
-            </Link>
+      <div className="relative w-full max-w-[460px] my-auto">
+        {/* Subtle ambient orange glow behind auth card */}
+        <div className="absolute -inset-1 rounded-[22px] bg-[rgba(249,115,22,0.08)] blur-2xl pointer-events-none -z-10" />
 
-            {/* Content */}
-            <div className="max-w-xl">
-              <p className="mb-5 text-sm font-semibold uppercase tracking-[0.15em] text-[#A78BFA]">
-                Welcome Back
-              </p>
-
-              <h1 className="text-5xl font-bold leading-tight xl:text-6xl text-[#F5F5F5]">
-                Your next interview starts with{" "}
-                <span className="bg-gradient-to-r from-[#F5F5F5] to-[#C4B5FD] bg-clip-text text-transparent">
-                  better practice.
-                </span>
-              </h1>
-
-              <p className="mt-6 max-w-lg text-lg leading-8 text-[#A1A1AA]">
-                Continue practicing with AI-powered mock interviews,
-                personalized feedback, and real-time peer sessions.
-              </p>
-
-              {/* Stats */}
-              <div className="mt-10 grid max-w-lg grid-cols-3 gap-4">
-                <div className="rounded-[14px] border border-[rgba(255,255,255,0.08)] bg-[#0B0B0D] p-4 backdrop-blur-xl transition duration-200 hover:border-[rgba(139,92,246,0.30)] hover:-translate-y-[3px] hover:shadow-[0_8px_25px_rgba(99,102,241,0.12)]">
-                  <p className="text-2xl font-bold text-[#F5F5F5]">AI</p>
-
-                  <p className="mt-1 text-xs text-[#71717A]">
-                    Smart Interviews
-                  </p>
-                </div>
-
-                <div className="rounded-[14px] border border-[rgba(255,255,255,0.08)] bg-[#0B0B0D] p-4 backdrop-blur-xl transition duration-200 hover:border-[rgba(139,92,246,0.30)] hover:-translate-y-[3px] hover:shadow-[0_8px_25px_rgba(99,102,241,0.12)]">
-                  <p className="text-2xl font-bold text-[#F5F5F5]">1:1</p>
-
-                  <p className="mt-1 text-xs text-[#71717A]">Peer Practice</p>
-                </div>
-
-                <div className="rounded-[14px] border border-[rgba(255,255,255,0.08)] bg-[#0B0B0D] p-4 backdrop-blur-xl transition duration-200 hover:border-[rgba(139,92,246,0.30)] hover:-translate-y-[3px] hover:shadow-[0_8px_25px_rgba(99,102,241,0.12)]">
-                  <p className="text-2xl font-bold text-[#F5F5F5]">24/7</p>
-
-                  <p className="mt-1 text-xs text-[#71717A]">Available</p>
-                </div>
-              </div>
+        {/* Top Header Navigation */}
+        <div className="mb-5 flex items-center justify-between">
+          <Link to="/" className="inline-flex items-center gap-2.5 group">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--border-subtle)] bg-[var(--card-bg-3)] shadow-sm text-[#F97316] transition duration-200 group-hover:border-[rgba(249,115,22,0.35)] group-hover:shadow-[0_0_15px_rgba(249,115,22,0.2)]">
+              <Crown className="h-5 w-5" />
             </div>
+            <span className="text-xl font-bold tracking-tight text-[var(--text-primary)] transition group-hover:text-[var(--text-accent)]">
+              MockMate
+            </span>
+          </Link>
 
-            <p className="text-sm text-[#71717A]">
-              © 2026 MockMate. All rights reserved.
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--text-secondary)] transition duration-200 hover:text-[var(--text-primary)]"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Back to home
+          </Link>
+        </div>
+
+        {/* Authentication Card */}
+        <div className="relative rounded-[18px] border border-[var(--border-subtle)] bg-[var(--bg-surface-4)]/92 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.35)] backdrop-blur-xl sm:p-8 transition duration-200 hover:border-[var(--border-strong)] login-fade-card">
+          {/* Heading */}
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold tracking-tight text-[var(--text-primary)] sm:text-3xl">
+              Welcome back
+            </h1>
+            <p className="mt-1.5 text-sm text-[var(--text-secondary)]">
+              Sign in to continue your interview preparation.
             </p>
           </div>
-        </section>
 
-        {/* Right Section */}
-        <section className="flex w-full items-center justify-center px-6 py-12 lg:w-1/2 bg-[#08070C]">
-          <div className="relative w-full max-w-md">
-            {/* Very subtle purple ambient glow behind card */}
-            <div className="absolute -inset-1 rounded-[22px] bg-[rgba(139,92,246,0.05)] blur-2xl pointer-events-none -z-10" />
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+            {/* Email Address */}
+            <div>
+              <label htmlFor="login-email" className="mb-1.5 block text-xs font-medium text-[var(--text-secondary)]">
+                Email address
+              </label>
 
-            {/* Mobile Back */}
-            <Link
-              to="/"
-              className="mb-8 inline-flex items-center gap-2 text-sm text-[#A1A1AA] transition duration-200 hover:text-[#F5F5F5] lg:hidden"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to home
-            </Link>
-
-            <div className="relative rounded-[18px] border border-[rgba(255,255,255,0.08)] bg-[#0D0D0F]/92 p-8 shadow-[0_20px_60px_rgba(0,0,0,0.35)] backdrop-blur-xl sm:p-10 transition duration-200 hover:-translate-y-[2px] hover:border-[rgba(255,255,255,0.14)] login-fade-card">
-              {/* Heading */}
-              <div className="mb-8">
-                <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#111113] text-[#8B5CF6] lg:hidden">
-                  <Crown className="h-5 w-5" />
-                </div>
-
-                <h2 className="text-3xl font-bold text-[#F5F5F5]">Welcome back</h2>
-
-                <p className="mt-2 text-[#A1A1AA]">
-                  Sign in to continue to MockMate.
-                </p>
-              </div>
-
-              {/* Login Form */}
-              <form onSubmit={handleSubmit} className="space-y-5">
-                {/* Email */}
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-[#A1A1AA]">
-                    Email address
-                  </label>
-
-                  <div className="relative">
-                    <Mail className="absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-[#71717A]" />
-
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@example.com"
-                      autoComplete="email"
-                      disabled={loading}
-                      className="w-full rounded-[12px] border border-[rgba(255,255,255,0.10)] bg-[#0A0A0C] py-3.5 pl-11 pr-4 text-[#F5F5F5] outline-none transition duration-200 placeholder:text-[#71717A] hover:border-[rgba(255,255,255,0.18)] focus:border-[rgba(139,92,246,0.55)] focus:ring-2 focus:ring-[rgba(139,92,246,0.08)] disabled:bg-[#151518] disabled:text-[#71717A] disabled:border-[rgba(255,255,255,0.04)] disabled:cursor-not-allowed"
-                    />
-                  </div>
-                </div>
-
-                {/* Password */}
-                <div>
-                  <div className="mb-2 flex items-center justify-between">
-                    <label className="text-sm font-medium text-[#A1A1AA]">
-                      Password
-                    </label>
-
-                    <button
-                      type="button"
-                      className="text-xs font-medium text-[#A1A1AA] transition duration-200 hover:text-[#A78BFA]"
-                    >
-                      Forgot password?
-                    </button>
-                  </div>
-
-                  <div className="relative">
-                    <Lock className="absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-[#71717A]" />
-
-                    <input
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Enter your password"
-                      autoComplete="current-password"
-                      disabled={loading}
-                      className="w-full rounded-[12px] border border-[rgba(255,255,255,0.10)] bg-[#0A0A0C] py-3.5 pl-11 pr-4 text-[#F5F5F5] outline-none transition duration-200 placeholder:text-[#71717A] hover:border-[rgba(255,255,255,0.18)] focus:border-[rgba(139,92,246,0.55)] focus:ring-2 focus:ring-[rgba(139,92,246,0.08)] disabled:bg-[#151518] disabled:text-[#71717A] disabled:border-[rgba(255,255,255,0.04)] disabled:cursor-not-allowed"
-                    />
-                  </div>
-                </div>
-
-                {/* Error */}
-                {error && (
-                  <div className="rounded-xl border border-[#EF4444]/25 bg-[#EF4444]/10 px-4 py-3 text-sm text-[#F87171]">
-                    {error}
-                  </div>
-                )}
-
-                {/* Submit */}
-                <button
-                  type="submit"
+              <div className="relative">
+                <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
+                <input
+                  id="login-email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (fieldErrors.email) setFieldErrors((prev) => ({ ...prev, email: null }));
+                  }}
+                  placeholder="you@example.com"
+                  autoComplete="email"
                   disabled={loading}
-                  className="w-full rounded-xl bg-gradient-to-r from-[#8B5CF6] to-[#6366F1] py-3.5 font-semibold text-white border-none shadow-md shadow-purple-900/20 transition duration-200 hover:-translate-y-[1px] hover:shadow-[0_8px_25px_rgba(99,102,241,0.22)] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+                  className={`w-full h-11 rounded-[12px] border bg-[var(--bg-surface-6)] pl-10 pr-4 text-sm text-[var(--text-primary)] outline-none transition duration-200 placeholder:text-[var(--text-muted)] hover:border-[var(--border-strong)] focus:border-[rgba(249,115,22,0.55)] focus:ring-2 focus:ring-[rgba(249,115,22,0.12)] disabled:bg-[var(--card-elevated-3)] disabled:text-[var(--text-muted)] disabled:cursor-not-allowed ${
+                    fieldErrors.email ? "border-[#EF4444]" : "border-[var(--border-subtle)]"
+                  }`}
+                />
+              </div>
+              {fieldErrors.email && (
+                <p className="mt-1 text-xs text-[#F87171]">{fieldErrors.email}</p>
+              )}
+            </div>
+
+            {/* Password */}
+            <div>
+              <div className="mb-1.5 flex items-center justify-between">
+                <label htmlFor="login-password" className="text-xs font-medium text-[var(--text-secondary)]">
+                  Password
+                </label>
+                <Link
+                  to="/forgot-password"
+                  className="text-xs font-medium text-[var(--text-secondary)] transition duration-200 hover:text-[var(--text-accent)]"
                 >
-                  {loading ? "Signing in..." : "Sign In"}
-                </button>
-              </form>
-
-              {/* Divider */}
-              <div className="my-7 flex items-center gap-4">
-                <div className="h-px flex-1 bg-[rgba(255,255,255,0.08)]" />
-
-                <span className="text-xs font-medium text-[#71717A]">OR</span>
-
-                <div className="h-px flex-1 bg-[rgba(255,255,255,0.08)]" />
+                  Forgot password?
+                </Link>
               </div>
 
-              {/* Register */}
-              <p className="text-center text-sm text-[#A1A1AA]">
-                Don't have an account?{" "}
-                <Link
-                  to="/register"
-                  className="font-semibold text-[#F5F5F5] underline transition duration-200 hover:text-[#A78BFA]"
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
+                <input
+                  id="login-password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (fieldErrors.password) setFieldErrors((prev) => ({ ...prev, password: null }));
+                  }}
+                  placeholder="Enter your password"
+                  autoComplete="current-password"
+                  disabled={loading}
+                  className={`w-full h-11 rounded-[12px] border bg-[var(--bg-surface-6)] pl-10 pr-11 text-sm text-[var(--text-primary)] outline-none transition duration-200 placeholder:text-[var(--text-muted)] hover:border-[var(--border-strong)] focus:border-[rgba(249,115,22,0.55)] focus:ring-2 focus:ring-[rgba(249,115,22,0.12)] disabled:bg-[var(--card-elevated-3)] disabled:text-[var(--text-muted)] disabled:cursor-not-allowed ${
+                    fieldErrors.password ? "border-[#EF4444]" : "border-[var(--border-subtle)]"
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition duration-150 p-1"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  tabIndex={0}
                 >
-                  Create account
-                </Link>
-              </p>
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {fieldErrors.password && (
+                <p className="mt-1 text-xs text-[#F87171]">{fieldErrors.password}</p>
+              )}
             </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="rounded-xl border border-[#EF4444]/25 bg-[#EF4444]/10 p-3.5 text-xs text-[#F87171]">
+                {error}
+              </div>
+            )}
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full h-11 rounded-xl bg-gradient-to-r from-[#F97316] to-[#EC4899] font-semibold text-sm text-white border-none shadow-md shadow-orange-900/20 transition duration-200 hover:-translate-y-[1px] hover:shadow-[0_8px_25px_rgba(236,72,153,0.22)] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                  <span>Signing in...</span>
+                </>
+              ) : (
+                "Sign In"
+              )}
+            </button>
+          </form>
+
+          {/* Divider */}
+          <div className="my-6 flex items-center gap-4">
+            <div className="h-px flex-1 bg-[var(--overlay-wash)]" />
+            <span className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">OR</span>
+            <div className="h-px flex-1 bg-[var(--overlay-wash)]" />
           </div>
-        </section>
+
+          {/* Register Secondary Action */}
+          <p className="text-center text-sm text-[var(--text-secondary)]">
+            Don't have an account?{" "}
+            <Link
+              to="/register"
+              className="font-semibold text-[var(--text-primary)] underline transition duration-200 hover:text-[var(--text-accent)]"
+            >
+              Create account
+            </Link>
+          </p>
+        </div>
       </div>
     </main>
   );

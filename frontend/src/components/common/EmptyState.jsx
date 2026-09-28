@@ -8,17 +8,17 @@ function EmptyState({
   onAction,
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[#262626] bg-[#0A0A0A] p-8 text-center backdrop-blur-xl my-4">
-      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#171717] border border-[#262626] text-purple-400 mb-4 shadow-lg shadow-purple-500/5">
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--strong-line)] bg-[var(--bg-surface)] p-8 text-center backdrop-blur-xl my-4">
+      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--chip-bg)] border border-[var(--strong-line)] text-orange-400 mb-4 shadow-lg shadow-orange-500/5">
         <Icon className="h-6 w-6" />
       </div>
-      <h3 className="text-base font-bold text-[#FFFFFF]">{title}</h3>
-      <p className="mt-1 text-xs text-[#A1A1A1] max-w-sm">{description}</p>
+      <h3 className="text-base font-bold text-[var(--text-primary-2)]">{title}</h3>
+      <p className="mt-1 text-xs text-[var(--text-secondary-2)] max-w-sm">{description}</p>
       {actionText && onAction && (
         <button
           type="button"
           onClick={onAction}
-          className="mt-5 rounded-xl bg-[#FFFFFF] px-4 py-2 text-xs font-bold text-[#000000] shadow-sm transition hover:bg-[#E5E5E5]"
+          className="mt-5 rounded-xl bg-[var(--inv-bg)] px-4 py-2 text-xs font-bold text-[var(--inv-text)] shadow-sm transition hover:bg-[var(--inv-hover-2)]"
         >
           {actionText}
         </button>

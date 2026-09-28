@@ -5,17 +5,14 @@ const authService = require("../services/auth.service");
 // register controller
 const register = async (req, res) => {
   try {
-    // get user data from request body
     const { fullName, email, password } = req.body;
 
-    // register user using authService
     const user = await authService.registerUser({
       fullName,
       email,
       password,
     });
 
-    // send response
     res.status(201).json({
       success: true,
       message: "User registered successfully",
@@ -37,7 +34,6 @@ const register = async (req, res) => {
 // login controller
 const login = async (req, res) => {
   try {
-    // get data from req body
     const { email, password } = req.body;
 
     const result = await authService.loginUser({
@@ -79,7 +75,6 @@ const getMe = asyncHandler(async (req, res) => {
         profileImage: req.user.profileImage,
         isPremium: req.user.isPremium,
         isVerified: req.user.isVerified,
-        // Only send whether a descriptor exists — never the raw array
         hasFaceDescriptor: Array.isArray(req.user.faceDescriptor) && req.user.faceDescriptor.length === 128,
         faceEnrolledAt: req.user.faceEnrolledAt || null,
       },
@@ -117,7 +112,7 @@ const updateProfile = asyncHandler(async (req, res) => {
   );
 });
 
-// Upload profile photo + store face descriptor from client-side face-api enrollment
+// Upload profile photo
 const uploadProfilePhoto = asyncHandler(async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ success: false, message: "Profile image file is required" });
@@ -160,8 +155,7 @@ const uploadProfilePhoto = asyncHandler(async (req, res) => {
   );
 });
 
-// Get face descriptor — only for authenticated user, only for pre-interview verification
-// The raw 128-float array is NEVER included in /auth/me to avoid unnecessary exposure
+// Get face descriptor
 const getFaceDescriptor = asyncHandler(async (req, res) => {
   if (!Array.isArray(req.user.faceDescriptor) || req.user.faceDescriptor.length !== 128) {
     return res.status(404).json({
@@ -179,6 +173,34 @@ const getFaceDescriptor = asyncHandler(async (req, res) => {
   );
 });
 
+// Forgot password controller
+const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body || {};
+
+  const result = await authService.forgotPassword(email);
+
+  return res.status(200).json({
+    success: true,
+    message: result.message,
+  });
+});
+
+// Reset password controller
+const resetPassword = asyncHandler(async (req, res) => {
+  const { token, password, confirmPassword } = req.body || {};
+
+  const result = await authService.resetPassword({
+    token,
+    password,
+    confirmPassword,
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: result.message,
+  });
+});
+
 module.exports = {
   register,
   login,
@@ -186,4 +208,6 @@ module.exports = {
   updateProfile,
   uploadProfilePhoto,
   getFaceDescriptor,
+  forgotPassword,
+  resetPassword,
 };

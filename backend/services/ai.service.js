@@ -1,9 +1,104 @@
 const ai = require("../config/gemini");
+const ApiError = require("../utils/ApiError");
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// Validates whether the document text is actually a candidate resume/CV
+const validateIsResume = async (resumeText) => {
+  if (!resumeText || resumeText.trim().length < 50) {
+    return {
+      isResume: false,
+      rejectionReason: "The uploaded document contains insufficient text to be analyzed as a resume.",
+    };
+  }
+
+  const prompt = `
+You are an expert ATS document classification engine.
+
+Analyze the following text extracted from a user's uploaded document and determine if it is a legitimate candidate resume or CV.
+
+A LEGITIMATE RESUME/CV MUST:
+- Describe a candidate's background, work experience, technical/soft skills, education, projects, certifications, or professional contact details.
+
+DOCUMENTS THAT ARE NOT RESUMES (MUST BE REJECTED):
+- Essays, articles, research papers, assignment answers, storybooks, recipes
+- Invoices, billing statements, purchase orders, receipts, financial spreadsheets
+- Software user manuals, API documentation, raw source code repositories
+- Legal contracts, privacy policies, terms of service
+- Random text, filler words, lorem ipsum, generic non-resume certificates
+
+Respond ONLY in structured JSON with:
+{
+  "isResume": true | false,
+  "rejectionReason": "Clear, polite error message explaining why the document is not a resume (if isResume is false), otherwise empty string"
+}
+
+DOCUMENT TEXT:
+${resumeText.substring(0, 3000)}
+`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3.1-flash-lite",
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: "object",
+          properties: {
+            isResume: { type: "boolean" },
+            rejectionReason: { type: "string" },
+          },
+          required: ["isResume"],
+        },
+      },
+    });
+
+    const parsed = JSON.parse(response.text);
+    return parsed;
+  } catch (err) {
+    console.warn("⚠️ AI resume validation warning, fallback heuristic:", err.message);
+    const textLower = resumeText.toLowerCase();
+    const resumeKeywords = [
+      "experience",
+      "education",
+      "skills",
+      "projects",
+      "work",
+      "university",
+      "college",
+      "degree",
+      "summary",
+      "contact",
+      "email",
+      "phone",
+      "curriculum vitae",
+      "resume",
+      "cv",
+    ];
+    const count = resumeKeywords.filter((kw) => textLower.includes(kw)).length;
+    if (count < 2) {
+      return {
+        isResume: false,
+        rejectionReason:
+          "The uploaded document does not appear to be a candidate resume or CV. Please upload a legitimate resume.",
+      };
+    }
+    return { isResume: true, rejectionReason: "" };
+  }
+};
+
 // analyzes resume
 const analyzeResume = async (resumeText) => {
+  const validation = await validateIsResume(resumeText);
+  if (!validation.isResume) {
+    throw new ApiError(
+      400,
+      validation.rejectionReason ||
+        "The uploaded document is not a valid resume/CV. Please upload a legitimate resume file.",
+    );
+  }
+
   const prompt = `
 You are an expert ATS resume analyzer and senior technical recruiter.
 
@@ -116,6 +211,8 @@ ${resumeText}
       if (!parsed || typeof parsed.atsScore !== "number") {
         throw new Error("Invalid structure returned by Gemini for resume analysis");
       }
+
+      return parsed;
 
       return parsed;
     } catch (error) {
@@ -321,188 +418,6 @@ Return structured JSON.
   return result;
 };
 
-const generateFinalInterviewFeedback = async ({
-  questions,
-  interviewType,
-  difficulty,
-}) => {
-  const answeredQuestions = questions.filter(
-    (question) =>
-      question.answer && question.answer.trim() && question.score !== null,
-  );
-
-  const interviewData = answeredQuestions.map((question, index) => ({
-    questionNumber: index + 1,
-    question: question.question,
-    answer: question.answer,
-    score: question.score,
-    feedback: question.feedback,
-    strengths: question.strengths,
-    improvements: question.improvements,
-  }));
-
-  const prompt = `
-You are an expert technical interviewer.
-
-Analyze the following completed mock interview.
-
-Interview Type:
-${interviewType}
-
-Difficulty:
-${difficulty}
-
-Interview responses:
-
-${JSON.stringify(interviewData, null, 2)}
-
-Generate a final interview performance report.
-
-Evaluate:
-
-1. Overall candidate performance.
-2. Technical knowledge.
-3. Communication quality based ONLY on the candidate's answers.
-4. Strengths.
-5. Weaknesses.
-6. Specific recommendations.
-
-Return only valid JSON.
-
-Do not invent experience or skills.
-
-The scores must be between 0 and 10.
-
-Use this exact structure:
-
-{
-  "summary": "Overall assessment of the candidate",
-  "technicalScore": 0,
-  "communicationScore": 0,
-  "strengths": [],
-  "weaknesses": [],
-  "recommendations": []
-}
-`;
-
-  let lastError;
-
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    try {
-      console.log(`🤖 Final interview feedback attempt ${attempt}/3`);
-
-      const response = await ai.models.generateContent({
-        // Use the same model that already works in your project
-        model: "gemini-3.1-flash-lite",
-
-        contents: prompt,
-
-        config: {
-          responseMimeType: "application/json",
-
-          responseSchema: {
-            type: "object",
-
-            properties: {
-              summary: {
-                type: "string",
-              },
-
-              technicalScore: {
-                type: "number",
-              },
-
-              communicationScore: {
-                type: "number",
-              },
-
-              problemSolvingScore: {
-                type: "number",
-              },
-
-              strengths: {
-                type: "array",
-                items: {
-                  type: "string",
-                },
-              },
-
-              weaknesses: {
-                type: "array",
-                items: {
-                  type: "string",
-                },
-              },
-
-              recommendations: {
-                type: "array",
-                items: {
-                  type: "string",
-                },
-              },
-            },
-
-            required: [
-              "summary",
-              "technicalScore",
-              "communicationScore",
-              "problemSolvingScore",
-              "strengths",
-              "weaknesses",
-              "recommendations",
-            ],
-          },
-        },
-      });
-
-      const result = JSON.parse(response.text);
-
-      // Basic validation
-      if (
-        !result.summary ||
-        typeof result.technicalScore !== "number" ||
-        typeof result.communicationScore !== "number"
-      ) {
-        throw new Error("Invalid final interview feedback from Gemini");
-      }
-
-      if (typeof result.problemSolvingScore !== "number") {
-        result.problemSolvingScore = Math.round(
-          (result.technicalScore + result.communicationScore) / 2
-        );
-      }
-
-      return result;
-    } catch (error) {
-      lastError = error;
-
-      const code = error?.code || error?.error?.code;
-
-      const status = error?.status || error?.error?.status;
-
-      console.error(
-        `❌ Final feedback attempt ${attempt} failed:`,
-        code || status || error.message,
-      );
-
-      // Retry temporary Gemini availability problems
-      if (code !== 503 && status !== "UNAVAILABLE") {
-        throw error;
-      }
-
-      if (attempt < 3) {
-        const delay = attempt * 2000;
-
-        console.log(`⏳ Retrying final feedback in ${delay}ms...`);
-
-        await sleep(delay);
-      }
-    }
-  }
-
-  throw lastError;
-};
-
 // -------------------------------------------------------------
 // Real-Time Interviewer: AI Greeting Generation
 // -------------------------------------------------------------
@@ -513,18 +428,32 @@ const generateGreeting = async ({
   difficulty,
   resumeText,
 }) => {
+  const currentHour = new Date().getHours();
+  let timeGreeting = "Good morning";
+  if (currentHour >= 12 && currentHour < 17) {
+    timeGreeting = "Good afternoon";
+  } else if (currentHour >= 17) {
+    timeGreeting = "Good evening";
+  }
+
+  const name = candidateName || "Candidate";
+  const role = targetRole || "Full Stack Developer";
+
   const prompt = `
 You are a warm, highly professional human AI recruiter conducting a live mock interview for MockMate.
 
-Candidate Name: ${candidateName || "Candidate"}
-Target Role: ${targetRole || "Full Stack Developer"}
+Candidate Name: ${name}
+Target Role: ${role}
 Interview Type: ${interviewType || "technical"}
 Difficulty Level: ${difficulty || "medium"}
 
 Candidate Resume Snippet:
 ${resumeText ? resumeText.substring(0, 800) : "No resume text attached."}
 
-Generate a concise, welcoming greeting message (2 sentences) introducing yourself as the MockMate AI interviewer and setting a positive tone. Also generate a strong opening question related to their experience or target role.
+INSTRUCTIONS:
+1. Start greeting with exact time-based greeting: "${timeGreeting}, ${name}."
+2. Followed by: "Welcome to your MockMate interview. I'll be conducting your ${role} interview today."
+3. First question should be a natural opening question: "Let's begin with a simple introduction. Could you tell me about yourself?"
 
 Return valid JSON with keys "greeting" and "firstQuestion".
 `;
@@ -550,8 +479,8 @@ Return valid JSON with keys "greeting" and "firstQuestion".
   } catch (error) {
     console.warn("⚠️ Falling back to default AI greeting due to error:", error.message);
     return {
-      greeting: `Hello ${candidateName || "Candidate"}, welcome to your MockMate ${interviewType} mock interview for the ${targetRole || "Software Developer"} position. I'm excited to speak with you today.`,
-      firstQuestion: `To start off, please introduce yourself and tell me about a project you recently worked on.`,
+      greeting: `${timeGreeting}, ${name}. Welcome to your MockMate interview. I'll be conducting your ${role} interview today.`,
+      firstQuestion: `Let's begin with a simple introduction. Could you tell me about yourself?`,
     };
   }
 };
@@ -567,19 +496,22 @@ const generateNextDynamicStep = async ({
   currentDifficulty,
   conversationHistory = [],
   lastAnswer,
-  lastEvaluation,
   questionNumber,
   totalQuestions,
+  candidateName,
   candidateContext = {},
 }) => {
+  const name = candidateName || "Candidate";
+
   const prompt = `
-You are an expert technical recruiter and AI interviewer conducting an adaptive real-time mock interview.
+You are an expert human-like technical interviewer conducting an adaptive live mock interview.
 
 Target Role: ${targetRole || "Full Stack Developer"}
 Experience Level: ${experienceLevel || "Mid Level"}
 Interview Type: ${interviewType || "technical"}
 Current Difficulty: ${currentDifficulty || "medium"}
 Progress: Question ${questionNumber} of ${totalQuestions}
+Candidate Name: ${name}
 
 Candidate Resume Text:
 ${resumeText ? resumeText.substring(0, 1200) : "N/A"}
@@ -588,29 +520,27 @@ Candidate Specific Projects & Skills Context:
 ${JSON.stringify(candidateContext, null, 2)}
 
 Recent Conversation History:
-${JSON.stringify(conversationHistory.slice(-6), null, 2)}
+${JSON.stringify(conversationHistory.slice(-8), null, 2)}
 
 Candidate's Latest Answer:
 "${lastAnswer || ""}"
 
-Latest Evaluation Score: ${lastEvaluation?.score ?? 7}/10
-Correctness: ${lastEvaluation?.correctness || "good"}
-Missing Concepts: ${JSON.stringify(lastEvaluation?.missingConcepts || [])}
-
-ADAPTIVE DECISION RULES:
-1. If candidate's last answer was weak/inaccurate or missed key concepts -> set nextAction="FOLLOW_UP" or "EASIER" and ask a clarifying question about that specific concept.
-2. If candidate's last answer was strong & high score -> set nextAction="HARDER" or "NEW_TOPIC" and increase difficulty or ask deeper architectural/trade-off questions.
-3. If candidate listed specific projects in their resume (e.g. "Hospital Management System" or "E-commerce platform") -> set nextAction="PROJECT_QUESTION" and ask a question specifically addressing how they designed or built that project!
-4. Never repeat questions already present in conversation history.
-5. If questionNumber >= totalQuestions, set nextAction="END_INTERVIEW" and shouldEndInterview=true.
+CRITICAL REAL HUMAN INTERVIEWER RULES:
+1. NO EVALUATION OR GRADING. NEVER mention scores, grades, ratings, performance, "good answer", "weak answer", "correct", or "incorrect".
+2. Respond naturally like a real interviewer before asking the next question:
+   - Use natural acknowledgments: "Thank you, ${name}.", "Got it.", "Understood.", "That's interesting.", "I see."
+   - If the candidate mentioned specific technologies or projects in their answer (e.g. Redis, WebRTC, microservices), ask an adaptive follow-up about that!
+   - If answer is unclear or too short, ask naturally: "Could you explain that a little more?" or "Could you give me a little more detail about that?"
+   - If candidate says "I don't know", say: "That's okay. Let me move to another topic."
+   - Ask about projects, experience, architecture, challenges, and problem solving from their resume context.
+3. If questionNumber > totalQuestions, set nextAction="END_INTERVIEW", shouldEndInterview=true, and set nextQuestion to:
+   "Thank you, ${name}. That concludes our interview. I appreciate your time. Your interview report is now being prepared."
 
 Return JSON:
 {
-  "nextAction": "FOLLOW_UP" | "HARDER" | "EASIER" | "NEW_TOPIC" | "PROJECT_QUESTION" | "END_INTERVIEW",
-  "nextQuestion": "The text of the next question",
+  "nextAction": "FOLLOW_UP" | "PROJECT_QUESTION" | "NEW_TOPIC" | "CLARIFICATION" | "END_INTERVIEW",
+  "nextQuestion": "The complete natural response and next question text",
   "isFollowUp": true/false,
-  "topic": "Topic category (e.g. React, Node.js, MongoDB, System Design)",
-  "suggestedDifficulty": "easy" | "medium" | "hard",
   "shouldEndInterview": true/false,
   "interviewerNote": "Short explanation of rationale"
 }
@@ -628,8 +558,6 @@ Return JSON:
             nextAction: { type: "string" },
             nextQuestion: { type: "string" },
             isFollowUp: { type: "boolean" },
-            topic: { type: "string" },
-            suggestedDifficulty: { type: "string" },
             shouldEndInterview: { type: "boolean" },
             interviewerNote: { type: "string" },
           },
@@ -645,18 +573,118 @@ Return JSON:
     console.warn("⚠️ Error generating dynamic next step, falling back:", error.message);
     return {
       nextAction: "FOLLOW_UP",
-      nextQuestion: "Can you elaborate on how you handled state management and error boundaries in that application?",
+      nextQuestion: "Thank you. Could you elaborate a bit more on the key architecture decisions you made for that project?",
       isFollowUp: true,
-      topic: "System Architecture",
-      suggestedDifficulty: currentDifficulty || "medium",
       shouldEndInterview: false,
-      interviewerNote: "Fallback follow-up question",
+      interviewerNote: "Fallback natural follow-up question",
     };
   }
 };
 
+const generateFinalInterviewFeedback = async ({
+  conversationHistory = [],
+  questions = [],
+  resumeText = "",
+  targetRole = "Software Developer",
+  interviewType = "technical",
+  difficulty = "medium",
+  candidateName = "Candidate",
+}) => {
+  const prompt = `
+You are a senior technical interviewer and recruiting manager.
+
+Analyze the complete transcript of the mock interview that just finished.
+
+Candidate Name: ${candidateName}
+Target Role: ${targetRole}
+Interview Type: ${interviewType}
+Difficulty: ${difficulty}
+
+Candidate Resume Context:
+${resumeText ? resumeText.substring(0, 1500) : "N/A"}
+
+Full Interview Conversation Transcript:
+${JSON.stringify(conversationHistory.length > 0 ? conversationHistory : questions, null, 2)}
+
+Generate a comprehensive final interview performance report based on the ENTIRE conversation.
+
+Evaluate:
+1. Overall Score (0 to 10 scale).
+2. Technical Score (0 to 10 scale).
+3. Communication Score (0 to 10 scale).
+4. Problem Solving Score (0 to 10 scale).
+5. Executive Summary of overall candidate performance.
+6. Strengths observed across all candidate responses.
+7. Weaknesses / Areas needing improvement.
+8. Specific actionable recommendations.
+
+Return valid JSON:
+{
+  "overallScore": 0,
+  "technicalScore": 0,
+  "communicationScore": 0,
+  "problemSolvingScore": 0,
+  "summary": "Overall assessment...",
+  "strengths": ["..."],
+  "weaknesses": ["..."],
+  "recommendations": ["..."]
+}
+`;
+
+  let lastError;
+
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      console.log(`🤖 Final interview feedback attempt ${attempt}/3`);
+
+      const response = await ai.models.generateContent({
+        model: "gemini-3.1-flash-lite",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "object",
+            properties: {
+              overallScore: { type: "number" },
+              technicalScore: { type: "number" },
+              communicationScore: { type: "number" },
+              problemSolvingScore: { type: "number" },
+              summary: { type: "string" },
+              strengths: { type: "array", items: { type: "string" } },
+              weaknesses: { type: "array", items: { type: "string" } },
+              recommendations: { type: "array", items: { type: "string" } },
+            },
+            required: [
+              "overallScore",
+              "technicalScore",
+              "communicationScore",
+              "problemSolvingScore",
+              "summary",
+              "strengths",
+              "weaknesses",
+              "recommendations",
+            ],
+          },
+        },
+      });
+
+      const result = JSON.parse(response.text);
+      if (!result.summary || typeof result.technicalScore !== "number") {
+        throw new Error("Invalid final interview feedback from Gemini");
+      }
+      return result;
+    } catch (error) {
+      lastError = error;
+      console.error(`❌ Final feedback attempt ${attempt} failed:`, error.message);
+      if (attempt < 3) await sleep(attempt * 2000);
+    }
+  }
+
+  throw lastError;
+};
 
 module.exports = {
+  validateIsResume,
   analyzeResume,
   generateInterviewQuestions,
   evaluateInterviewAnswer,
@@ -664,3 +692,4 @@ module.exports = {
   generateGreeting,
   generateNextDynamicStep,
 };
+

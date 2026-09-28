@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const PeerInterview = require("../models/peerInterview.model");
 const ApiError = require("../utils/ApiError");
+const { createNotification } = require("./notification.service");
 
 // Generate room code
 const generateRoomCode = () => {
@@ -219,6 +220,24 @@ const startPeerInterview = async ({ userId, roomCode }) => {
 
   console.log("✅ Peer interview started successfully:", peerInterview.roomCode);
 
+  // Notify participants that interview has started
+  try {
+    for (const participant of peerInterview.participants) {
+      if (participant.user) {
+        await createNotification({
+          userId: participant.user,
+          type: "PEER_INTERVIEW_STARTED",
+          title: "Peer Interview Started",
+          message: `Peer interview room ${peerInterview.roomCode} is now live.`,
+          link: `/peer-interview/room/${peerInterview.roomCode}`,
+          metadata: { roomId: peerInterview._id, roomCode: peerInterview.roomCode },
+        });
+      }
+    }
+  } catch (notifErr) {
+    console.warn("⚠️ Peer start notification error:", notifErr.message);
+  }
+
   return {
     roomId: peerInterview._id,
     roomCode: peerInterview.roomCode,
@@ -261,6 +280,24 @@ const completePeerInterview = async ({ userId, roomCode }) => {
   peerInterview.completedAt = new Date();
 
   await peerInterview.save();
+
+  // Notify participants that interview is completed
+  try {
+    for (const participant of peerInterview.participants) {
+      if (participant.user) {
+        await createNotification({
+          userId: participant.user,
+          type: "PEER_INTERVIEW_COMPLETED",
+          title: "Peer Interview Completed",
+          message: `Peer interview room ${peerInterview.roomCode} has ended.`,
+          link: "/peer-interview",
+          metadata: { roomId: peerInterview._id, roomCode: peerInterview.roomCode },
+        });
+      }
+    }
+  } catch (notifErr) {
+    console.warn("⚠️ Peer complete notification error:", notifErr.message);
+  }
 
   return {
     roomId: peerInterview._id,

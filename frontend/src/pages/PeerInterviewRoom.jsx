@@ -10,7 +10,6 @@ import {
   Play,
   CheckSquare,
   LogOut,
-  Radio,
   Loader2,
   AlertCircle,
   Users,
@@ -19,11 +18,27 @@ import { io } from "socket.io-client";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { API_BASE_URL, SOCKET_BASE_URL } from "../config/config";
+import ThemeToggle from "../components/common/ThemeToggle";
 
 function PeerInterviewRoom() {
   const { roomCode } = useParams();
   const { token, user } = useAuth();
   const navigate = useNavigate();
+
+  // Helper to validate and sanitize display names (prevents undefined, null, [object Object])
+  const getValidName = (name, fallback) => {
+    if (!name || typeof name !== "string") return fallback;
+    const trimmed = name.trim();
+    if (
+      !trimmed ||
+      trimmed === "undefined" ||
+      trimmed === "null" ||
+      trimmed === "[object Object]"
+    ) {
+      return fallback;
+    }
+    return trimmed;
+  };
 
   // Room & Peer State
   const [peerInterview, setPeerInterview] = useState(null);
@@ -33,12 +48,11 @@ function PeerInterviewRoom() {
   const [roomStatus, setRoomStatus] = useState("waiting");
   const [participantCount, setParticipantCount] = useState(1);
   const [peerConnected, setPeerConnected] = useState(false);
+  const [remoteParticipant, setRemoteParticipant] = useState(null);
 
   // Controls State
   const [micEnabled, setMicEnabled] = useState(true);
   const [camEnabled, setCamEnabled] = useState(true);
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingStatus, setRecordingStatus] = useState(null);
 
   // Local Stream State for React DOM binding
   const [localStream, setLocalStream] = useState(null);
@@ -50,9 +64,6 @@ function PeerInterviewRoom() {
   const remoteStreamRef = useRef(null);
   const peerConnectionRef = useRef(null);
   const socketRef = useRef(null);
-  const mediaRecorderRef = useRef(null);
-  const recordedChunksRef = useRef([]);
-  const recordingStartTimeRef = useRef(null);
   const pendingIceCandidatesRef = useRef([]);
   const isCreatingOfferRef = useRef(false);
 
@@ -102,6 +113,25 @@ function PeerInterviewRoom() {
 
         localStreamRef.current = stream;
         setLocalStream(stream);
+
+        // Attach tracks if peerConnection was created prior to getUserMedia completing
+        if (peerConnectionRef.current) {
+          const pc = peerConnectionRef.current;
+          const senders = pc.getSenders();
+          let addedAny = false;
+          stream.getTracks().forEach((track) => {
+            const alreadyAdded = senders.some((s) => s.track && s.track.kind === track.kind);
+            if (!alreadyAdded) {
+              pc.addTrack(track, stream);
+              addedAny = true;
+              console.log(`[WEBRTC] Added local ${track.kind} track to existing PC after getUserMedia`);
+            }
+          });
+          if (addedAny && pc.signalingState === "stable" && socketRef.current) {
+            console.log("[WEBRTC] Re-negotiating after adding media tracks to active PC");
+            createWebRTCOffer(roomCode.trim().toUpperCase(), socketRef.current);
+          }
+        }
       } catch (err) {
         console.error("[WEBRTC] getUserMedia error:", err.name, err.message);
 
@@ -127,8 +157,19 @@ function PeerInterviewRoom() {
     };
   }, []);
 
+  // Helper to wait for localStreamRef before offer/answer negotiation
+  const waitForLocalStream = async (maxWaitMs = 5000) => {
+    if (localStreamRef.current) return localStreamRef.current;
+    console.log("[WEBRTC] Waiting for local media stream to resolve...");
+    const start = Date.now();
+    while (!localStreamRef.current && Date.now() - start < maxWaitMs) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+    return localStreamRef.current;
+  };
+
   // -----------------------------------------------------------------
-  // 2. ATTACH LOCAL STREAM TO VIDEO DOM ELEMENT ONCE MOUNTED
+  // 2. ATTACH LOCAL & REMOTE STREAMS TO VIDEO DOM ELEMENTS
   // -----------------------------------------------------------------
   useEffect(() => {
     if (localVideoRef.current && localStreamRef.current) {
@@ -136,6 +177,16 @@ function PeerInterviewRoom() {
       localVideoRef.current.srcObject = localStreamRef.current;
     }
   }, [localStream, loadingRoom]);
+
+  useEffect(() => {
+    if (remoteVideoRef.current && remoteStreamRef.current) {
+      console.log("[WEBRTC] Binding remote stream to remote video element");
+      remoteVideoRef.current.srcObject = remoteStreamRef.current;
+      remoteVideoRef.current.play().catch((e) => {
+        console.warn("[WEBRTC] Remote video auto-play warning:", e.message);
+      });
+    }
+  }, [peerConnected, loadingRoom]);
 
   // -----------------------------------------------------------------
   // 3. FETCH ROOM DETAILS & CONNECT SOCKET.IO SIGNALING
@@ -162,7 +213,39 @@ function PeerInterviewRoom() {
         if (isMounted) {
           setPeerInterview(data);
           setRoomStatus(data.status);
-          setParticipantCount(data.participants?.length || 1);
+          const initialCount = Math.min(Math.max(data.participants?.length || 1, 1), 2);
+          setParticipantCount(initialCount);
+
+          // Extract remote participant display name if present in HTTP response
+          const currentIdStr = user?._id?.toString();
+          if (currentIdStr) {
+            let foundName = null;
+            let foundId = null;
+
+            const hostId = data.host?._id ? data.host._id.toString() : data.host?.toString();
+            if (hostId && hostId !== currentIdStr) {
+              foundId = hostId;
+              foundName = data.host?.fullName || data.host?.name;
+            } else if (Array.isArray(data.participants)) {
+              for (const p of data.participants) {
+                const pUser = p.user;
+                if (!pUser) continue;
+                const pId = pUser._id ? pUser._id.toString() : pUser.toString();
+                if (pId && pId !== currentIdStr) {
+                  foundId = pId;
+                  foundName = pUser.fullName || pUser.name;
+                  break;
+                }
+              }
+            }
+
+            if (foundId) {
+              setRemoteParticipant({
+                userId: foundId,
+                displayName: getValidName(foundName, "Participant"),
+              });
+            }
+          }
         }
 
         // Initialize Socket.IO connection
@@ -174,8 +257,12 @@ function PeerInterviewRoom() {
         socketRef.current = socket;
 
         socket.on("connect", () => {
+          const localName = user?.fullName || user?.name || user?.displayName || user?.username;
           console.log(`[SOCKET] Connected: socketId=${socket.id} userId=${user?._id}`);
-          socket.emit("join_room", { roomCode: cleanCode });
+          socket.emit("join_room", {
+            roomCode: cleanCode,
+            displayName: getValidName(localName, "You"),
+          });
         });
 
         // Dedicated Named Event Handlers
@@ -183,16 +270,24 @@ function PeerInterviewRoom() {
           console.log("[SOCKET] room_joined payload:", payload);
           if (isMounted && payload?.status) {
             setRoomStatus(payload.status);
-            setParticipantCount(payload.participants || 1);
+            const count = Math.min(Math.max(payload.participants || 1, 1), 2);
+            setParticipantCount(count);
           }
         };
 
         const handleParticipantJoined = (payload) => {
           console.log(
-            `[SOCKET] participant_joined: peerSocketId=${payload.socketId} peerUserId=${payload.userId}`
+            `[SOCKET] participant_joined: peerSocketId=${payload.socketId} peerUserId=${payload.userId} displayName=${payload.displayName}`
           );
           if (isMounted) {
-            setParticipantCount((prev) => Math.max(prev + 1, 2));
+            setParticipantCount(2);
+            if (payload.userId && payload.userId.toString() !== user?._id?.toString()) {
+              setRemoteParticipant({
+                userId: payload.userId,
+                socketId: payload.socketId,
+                displayName: getValidName(payload.displayName, "Participant"),
+              });
+            }
           }
 
           // Initiator Rule: Existing room participant generates ONE offer when peer joins
@@ -204,6 +299,14 @@ function PeerInterviewRoom() {
           console.log(
             `[WEBRTC] Offer received from senderSocketId=${payload.senderSocketId || "unknown"} senderUserId=${payload.senderUserId}`
           );
+          if (isMounted && payload.senderUserId && payload.senderUserId.toString() !== user?._id?.toString()) {
+            setParticipantCount(2);
+            setRemoteParticipant((prev) => ({
+              userId: payload.senderUserId,
+              socketId: payload.senderSocketId || prev?.socketId,
+              displayName: getValidName(payload.senderDisplayName, prev?.displayName || "Participant"),
+            }));
+          }
           if (payload.offer) {
             await handleWebRTCOffer(payload.offer, cleanCode, socket);
           }
@@ -214,6 +317,14 @@ function PeerInterviewRoom() {
           console.log(
             `[WEBRTC] Answer received from senderSocketId=${payload.senderSocketId || "unknown"} senderUserId=${payload.senderUserId}`
           );
+          if (isMounted && payload.senderUserId && payload.senderUserId.toString() !== user?._id?.toString()) {
+            setParticipantCount(2);
+            setRemoteParticipant((prev) => ({
+              userId: payload.senderUserId,
+              socketId: payload.senderSocketId || prev?.socketId,
+              displayName: getValidName(payload.senderDisplayName, prev?.displayName || "Participant"),
+            }));
+          }
           if (payload.answer) {
             await handleWebRTCAnswer(payload.answer);
           }
@@ -242,6 +353,7 @@ function PeerInterviewRoom() {
           if (isMounted) {
             setPeerConnected(false);
             setParticipantCount(1);
+            setRemoteParticipant(null);
           }
           closePeerConnection();
         };
@@ -286,6 +398,17 @@ function PeerInterviewRoom() {
   const createPeerConnection = (cleanCode, socket) => {
     if (peerConnectionRef.current) {
       console.log("[WEBRTC] Existing peer connection reused");
+      if (localStreamRef.current) {
+        const pc = peerConnectionRef.current;
+        const senders = pc.getSenders();
+        localStreamRef.current.getTracks().forEach((track) => {
+          const alreadyAdded = senders.some((s) => s.track && s.track.kind === track.kind);
+          if (!alreadyAdded) {
+            pc.addTrack(track, localStreamRef.current);
+            console.log(`[WEBRTC] Added missing local ${track.kind} track to existing PC`);
+          }
+        });
+      }
       return peerConnectionRef.current;
     }
 
@@ -307,21 +430,32 @@ function PeerInterviewRoom() {
 
     // Handle incoming remote media stream tracks
     pc.ontrack = (event) => {
-      console.log("[WEBRTC] Remote track received:", event.track.kind);
+      console.log(
+        `[WEBRTC ONTRACK] Remote ${event.track.kind} track received (id=${event.track.id}, readyState=${event.track.readyState})`
+      );
       if (event.streams && event.streams[0]) {
         remoteStreamRef.current = event.streams[0];
-        if (remoteVideoRef.current) {
-          remoteVideoRef.current.srcObject = event.streams[0];
-          console.log("[WEBRTC] Remote stream attached");
+      } else {
+        if (!remoteStreamRef.current) {
+          remoteStreamRef.current = new MediaStream();
         }
-        setPeerConnected(true);
+        remoteStreamRef.current.addTrack(event.track);
       }
+
+      if (remoteVideoRef.current) {
+        remoteVideoRef.current.srcObject = remoteStreamRef.current;
+        remoteVideoRef.current.play().catch((e) => {
+          console.warn("[WEBRTC ONTRACK] Remote video auto-play warning:", e.message);
+        });
+        console.log("[WEBRTC ONTRACK] Attached remoteStream to remote video element");
+      }
+      setPeerConnected(true);
     };
 
     // Relay local ICE Candidates via Socket.IO
     pc.onicecandidate = (event) => {
       if (event.candidate && socket) {
-        console.log("[WEBRTC] ICE candidate sent");
+        console.log("[WEBRTC ICE] Candidate sent to remote peer");
         socket.emit("webrtc_ice_candidate", {
           roomCode: cleanCode,
           candidate: event.candidate,
@@ -330,11 +464,12 @@ function PeerInterviewRoom() {
     };
 
     pc.onconnectionstatechange = () => {
-      console.log("[WEBRTC] Connection state:", pc.connectionState);
+      console.log(
+        `[WEBRTC STATE] userId=${user?._id} connectionState=${pc.connectionState} iceConnectionState=${pc.iceConnectionState} signalingState=${pc.signalingState}`
+      );
       if (pc.connectionState === "connected") {
         setPeerConnected(true);
       } else if (
-        pc.connectionState === "disconnected" ||
         pc.connectionState === "failed" ||
         pc.connectionState === "closed"
       ) {
@@ -343,11 +478,11 @@ function PeerInterviewRoom() {
     };
 
     pc.oniceconnectionstatechange = () => {
-      console.log("[WEBRTC] ICE connection state:", pc.iceConnectionState);
+      console.log(`[WEBRTC STATE] iceConnectionState changed: ${pc.iceConnectionState}`);
     };
 
     pc.onsignalingstatechange = () => {
-      console.log("[WEBRTC] Signaling state:", pc.signalingState);
+      console.log(`[WEBRTC STATE] signalingState changed: ${pc.signalingState}`);
     };
 
     return pc;
@@ -359,6 +494,8 @@ function PeerInterviewRoom() {
       console.log("[WEBRTC] Offer creation already in progress, skipping");
       return;
     }
+
+    await waitForLocalStream();
 
     const existingPc = peerConnectionRef.current;
     if (existingPc && existingPc.signalingState !== "stable") {
@@ -391,6 +528,8 @@ function PeerInterviewRoom() {
   // Handle Received SDP Offer (Receiver)
   const handleWebRTCOffer = async (offer, cleanCode, socket) => {
     try {
+      await waitForLocalStream();
+
       const pc = createPeerConnection(cleanCode, socket);
       if (pc.signalingState === "have-local-offer") {
         console.log("[WEBRTC] Offer collision detected (have-local-offer)");
@@ -555,10 +694,6 @@ function PeerInterviewRoom() {
       if (socketRef.current) {
         socketRef.current.emit("interview_completed", { roomCode: cleanCode });
       }
-
-      if (isRecording) {
-        stopRecording();
-      }
     } catch (err) {
       alert(err.response?.data?.message || "Failed to complete interview.");
     }
@@ -589,93 +724,25 @@ function PeerInterviewRoom() {
     }
   };
 
-  // -----------------------------------------------------------------
-  // 7. SESSION RECORDING (MediaRecorder)
-  // -----------------------------------------------------------------
-  const startRecording = () => {
-    const streamToRecord = remoteStreamRef.current || localStreamRef.current;
-    if (!streamToRecord) {
-      alert("No active media stream available for recording.");
-      return;
-    }
-
-    try {
-      recordedChunksRef.current = [];
-      recordingStartTimeRef.current = Date.now();
-      const mediaRecorder = new MediaRecorder(streamToRecord, {
-        mimeType: "video/webm",
-      });
-
-      mediaRecorderRef.current = mediaRecorder;
-
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data && e.data.size > 0) {
-          recordedChunksRef.current.push(e.data);
-        }
-      };
-
-      mediaRecorder.onstop = async () => {
-        setRecordingStatus("Uploading recording to cloud...");
-        const durationSeconds = recordingStartTimeRef.current
-          ? Math.max(1, Math.round((Date.now() - recordingStartTimeRef.current) / 1000))
-          : 0;
-        const blob = new Blob(recordedChunksRef.current, { type: "video/webm" });
-        const formData = new FormData();
-        formData.append("recording", blob, "peer_session.webm");
-        formData.append("interviewId", peerInterview._id);
-        formData.append("duration", durationSeconds.toString());
-
-        try {
-          await axios.post(`${API_BASE_URL}/recordings`, formData, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "multipart/form-data",
-            },
-          });
-          setRecordingStatus("Recording saved successfully!");
-        } catch (recErr) {
-          console.error("Recording upload error:", recErr);
-          setRecordingStatus("Failed to save recording.");
-        } finally {
-          setTimeout(() => setRecordingStatus(null), 3000);
-        }
-      };
-
-      mediaRecorder.start(1000);
-      setIsRecording(true);
-      setRecordingStatus("Recording active...");
-    } catch (recErr) {
-      console.error("MediaRecorder init error:", recErr);
-      alert("Video recording is not supported in this browser environment.");
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-    }
-  };
-
   if (loadingRoom) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#000000] text-[#FFFFFF] p-6">
-        <Loader2 className="h-10 w-10 animate-spin text-[#FFFFFF] mr-3" />
-        <p className="text-sm font-semibold text-[#A1A1A1]">Loading peer room...</p>
+      <div className="flex min-h-screen items-center justify-center bg-[var(--bg-void)] text-[var(--text-primary-2)] p-6">
+        <Loader2 className="h-10 w-10 animate-spin text-[var(--text-primary-2)] mr-3" />
+        <p className="text-sm font-semibold text-[var(--text-secondary-2)]">Loading peer room...</p>
       </div>
     );
   }
 
   if (error && !peerInterview) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#000000] p-6">
+      <div className="flex min-h-screen items-center justify-center bg-[var(--bg-void)] p-6">
         <div className="w-full max-w-md rounded-2xl border border-[#EF4444]/30 bg-[#EF4444]/10 p-8 text-center backdrop-blur-xl">
           <AlertCircle className="mx-auto h-10 w-10 text-[#EF4444] mb-3" />
-          <h3 className="text-lg font-bold text-[#FFFFFF]">Room Access Error</h3>
+          <h3 className="text-lg font-bold text-[var(--text-primary-2)]">Room Access Error</h3>
           <p className="mt-2 text-sm text-[#EF4444]">{error}</p>
           <button
             onClick={() => navigate("/peer/setup")}
-            className="mt-6 rounded-xl border border-[#262626] bg-[#0A0A0A] px-5 py-2.5 text-xs font-semibold text-[#FFFFFF] hover:bg-[#1A1A1A]"
+            className="mt-6 rounded-xl border border-[var(--strong-line)] bg-[var(--bg-surface)] px-5 py-2.5 text-xs font-semibold text-[var(--text-primary-2)] hover:bg-[var(--hover-bg)]"
           >
             Return to Peer Setup
           </button>
@@ -684,39 +751,51 @@ function PeerInterviewRoom() {
     );
   }
 
+  const displayStatus =
+    roomStatus === "completed"
+      ? "completed"
+      : roomStatus === "active"
+      ? "active"
+      : participantCount >= 2
+      ? "ready"
+      : "waiting";
+
   return (
-    <div className="min-h-screen bg-[#000000] text-[#FFFFFF] selection:bg-[#FFFFFF] selection:text-[#000000] flex flex-col justify-between">
+    <div className="h-screen max-h-screen overflow-hidden bg-[var(--bg-void)] text-[var(--text-primary-2)] selection:bg-[var(--inv-bg)] selection:text-[var(--inv-text)] flex flex-col justify-between">
       {/* Top Header */}
-      <header className="border-b border-[#262626] bg-[#000000] sticky top-0 z-40">
+      <header className="shrink-0 border-b border-[var(--strong-line)] bg-[var(--bg-void)] z-30">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#262626] bg-[#111111]">
-              <Crown className="h-4 w-4 text-[#FFFFFF]" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--strong-line)] bg-[var(--card-bg-2)]">
+              <Crown className="h-4 w-4 text-[var(--text-primary-2)]" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-[#FFFFFF] leading-none">
+              <h2 className="text-sm font-bold text-[var(--text-primary-2)] leading-none">
                 {peerInterview?.title || "Peer Mock Session"}
               </h2>
-              <p className="text-xs font-mono text-[#A1A1A1] mt-1">
+              <p className="text-xs font-mono text-[var(--text-secondary-2)] mt-1">
                 Room: {roomCode?.toUpperCase()}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <span
               className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider ${
-                roomStatus === "active"
+                displayStatus === "active"
                   ? "bg-[#3B82F6]/10 text-[#3B82F6] border border-[#3B82F6]/30"
-                  : roomStatus === "completed"
+                  : displayStatus === "ready"
                   ? "bg-[#22C55E]/10 text-[#22C55E] border border-[#22C55E]/30"
+                  : displayStatus === "completed"
+                  ? "bg-[#A855F7]/10 text-[#A855F7] border border-[#A855F7]/30"
                   : "bg-[#F59E0B]/10 text-[#F59E0B] border border-[#F59E0B]/30"
               }`}
             >
-              Status: {roomStatus}
+              Status: {displayStatus}
             </span>
 
-            <span className="hidden sm:inline-flex items-center gap-1 rounded-full border border-[#262626] bg-[#0A0A0A] px-3 py-1 text-xs font-semibold text-[#A1A1A1]">
+            <span className="hidden sm:inline-flex items-center gap-1 rounded-full border border-[var(--strong-line)] bg-[var(--bg-surface)] px-3 py-1 text-xs font-semibold text-[var(--text-secondary-2)]">
               <Users className="h-3.5 w-3.5" />
               {participantCount} / 2 Participants
             </span>
@@ -734,24 +813,16 @@ function PeerInterviewRoom() {
       </header>
 
       {/* Main Video Grid */}
-      <main className="mx-auto w-full max-w-7xl px-6 py-6 flex-1 flex flex-col justify-center">
+      <main className="flex-1 min-h-0 mx-auto w-full max-w-7xl px-6 py-4 flex flex-col items-center justify-center overflow-hidden">
         {/* Media Error Alert Banner */}
         {mediaError && (
-          <div className="mb-4 flex items-center justify-center gap-2 rounded-xl border border-[#EF4444]/30 bg-[#EF4444]/10 py-3 px-4 text-xs font-semibold text-[#EF4444]">
+          <div className="mb-3 shrink-0 flex items-center justify-center gap-2 rounded-xl border border-[#EF4444]/30 bg-[#EF4444]/10 py-2.5 px-4 text-xs font-semibold text-[#EF4444]">
             <AlertCircle className="h-4 w-4 shrink-0" />
             <span>{mediaError}</span>
           </div>
         )}
 
-        {/* Recording Status Banner */}
-        {recordingStatus && (
-          <div className="mb-4 flex items-center justify-center gap-2 rounded-xl border border-[#F59E0B]/30 bg-[#F59E0B]/10 py-2.5 px-4 text-xs font-bold text-[#F59E0B]">
-            <Radio className="h-4 w-4 animate-pulse text-[#F59E0B]" />
-            <span>{recordingStatus}</span>
-          </div>
-        )}
-
-        <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-[#262626] bg-[#111111] shadow-2xl">
+        <div className="relative w-full h-full max-h-full aspect-video overflow-hidden rounded-2xl border border-[var(--strong-line)] bg-[var(--card-bg-2)] shadow-2xl flex items-center justify-center">
           {/* Primary Canvas: Remote Peer Video */}
           <video
             ref={remoteVideoRef}
@@ -760,20 +831,34 @@ function PeerInterviewRoom() {
             className="h-full w-full object-cover"
           />
 
+          {peerConnected && (
+            <div className="absolute bottom-4 left-4 rounded-md bg-[rgba(0,0,0,0.80)] border border-[var(--strong-line)] px-2 py-0.5 text-[10px] font-semibold text-[var(--text-secondary-2)]">
+              {getValidName(remoteParticipant?.displayName, "Participant")}
+            </div>
+          )}
+
           {!peerConnected && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0A0A0A]/90 text-center p-6 backdrop-blur-md">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#111111] border border-[#262626] text-[#FFFFFF] mb-3">
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-[var(--bg-surface)]/90 text-center p-6 backdrop-blur-md">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--card-bg-2)] border border-[var(--strong-line)] text-[var(--text-primary-2)] mb-3">
                 <Users className="h-8 w-8" />
               </div>
-              <h3 className="text-lg font-bold text-[#FFFFFF]">Waiting for Peer...</h3>
-              <p className="mt-1 text-xs text-[#A1A1A1] max-w-sm">
-                Share room code <strong className="text-[#FFFFFF] font-mono">{roomCode}</strong> with your partner to begin video call.
+              <h3 className="text-lg font-bold text-[var(--text-primary-2)]">
+                {participantCount === 0
+                  ? "Waiting for participants..."
+                  : participantCount === 1
+                  ? "Waiting for Peer..."
+                  : "Ready to start"}
+              </h3>
+              <p className="mt-1 text-xs text-[var(--text-secondary-2)] max-w-sm">
+                {participantCount >= 2
+                  ? "Both participants are in the room. Establishing video connection..."
+                  : `Share room code ${roomCode} with your partner to begin video call.`}
               </p>
             </div>
           )}
 
           {/* Secondary Floating Canvas: Local User Video */}
-          <div className="absolute bottom-4 right-4 h-32 w-48 overflow-hidden rounded-xl border border-[#262626] bg-[#000000] shadow-2xl sm:h-40 sm:w-56">
+          <div className="absolute bottom-4 right-4 h-32 w-48 overflow-hidden rounded-xl border border-[var(--strong-line)] bg-[var(--bg-void)] shadow-2xl sm:h-40 sm:w-56">
             <video
               ref={localVideoRef}
               autoPlay
@@ -781,15 +866,15 @@ function PeerInterviewRoom() {
               muted
               className="h-full w-full object-cover"
             />
-            <div className="absolute bottom-2 left-2 rounded-md bg-[#000000]/80 border border-[#262626] px-2 py-0.5 text-[10px] font-semibold text-[#A1A1A1]">
-              You (Local)
+            <div className="absolute bottom-2 left-2 rounded-md bg-[rgba(0,0,0,0.80)] border border-[var(--strong-line)] px-2 py-0.5 text-[10px] font-semibold text-[var(--text-secondary-2)]">
+              {getValidName(user?.fullName || user?.name || user?.displayName || user?.username, "You")}
             </div>
           </div>
         </div>
       </main>
 
       {/* Bottom Floating Control Bar */}
-      <footer className="border-t border-[#262626] bg-[#000000] py-4 sticky bottom-0 z-40">
+      <footer className="shrink-0 border-t border-[var(--strong-line)] bg-[var(--bg-void)] py-3 z-30">
         <div className="mx-auto flex max-w-3xl items-center justify-center gap-4 px-6">
           {/* Mic Toggle */}
           <button
@@ -797,7 +882,7 @@ function PeerInterviewRoom() {
             onClick={toggleMic}
             className={`flex h-12 w-12 items-center justify-center rounded-xl border transition ${
               micEnabled
-                ? "border-[#262626] bg-[#111111] text-[#FFFFFF] hover:bg-[#1A1A1A]"
+                ? "border-[var(--strong-line)] bg-[var(--card-bg-2)] text-[var(--text-primary-2)] hover:bg-[var(--hover-bg)]"
                 : "border-[#EF4444]/30 bg-[#EF4444]/10 text-[#EF4444]"
             }`}
             title={micEnabled ? "Mute Microphone" : "Unmute Microphone"}
@@ -811,7 +896,7 @@ function PeerInterviewRoom() {
             onClick={toggleCam}
             className={`flex h-12 w-12 items-center justify-center rounded-xl border transition ${
               camEnabled
-                ? "border-[#262626] bg-[#111111] text-[#FFFFFF] hover:bg-[#1A1A1A]"
+                ? "border-[var(--strong-line)] bg-[var(--card-bg-2)] text-[var(--text-primary-2)] hover:bg-[var(--hover-bg)]"
                 : "border-[#EF4444]/30 bg-[#EF4444]/10 text-[#EF4444]"
             }`}
             title={camEnabled ? "Turn Off Camera" : "Turn On Camera"}
@@ -819,26 +904,12 @@ function PeerInterviewRoom() {
             {camEnabled ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
           </button>
 
-          {/* Record Toggle */}
-          <button
-            type="button"
-            onClick={isRecording ? stopRecording : startRecording}
-            className={`flex items-center gap-2 rounded-xl border px-4 py-3 text-xs font-bold transition ${
-              isRecording
-                ? "border-[#EF4444]/50 bg-[#EF4444]/20 text-[#EF4444] animate-pulse"
-                : "border-[#262626] bg-[#111111] text-[#A1A1A1] hover:bg-[#1A1A1A] hover:text-[#FFFFFF]"
-            }`}
-          >
-            <Radio className="h-4 w-4" />
-            <span>{isRecording ? "Stop Recording" : "Record Session"}</span>
-          </button>
-
           {/* Host Start Action */}
           {isHost && roomStatus === "waiting" && (
             <button
               type="button"
               onClick={handleStartInterview}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#FFFFFF] px-6 py-3 text-xs font-bold text-[#000000] shadow-sm transition hover:bg-[#F5F5F5]"
+              className="inline-flex items-center gap-2 rounded-xl bg-[var(--inv-bg)] px-6 py-3 text-xs font-bold text-[var(--inv-text)] shadow-sm transition hover:bg-[var(--inv-hover)]"
             >
               <Play className="h-4 w-4" />
               Start Interview
@@ -850,7 +921,7 @@ function PeerInterviewRoom() {
             <button
               type="button"
               onClick={handleCompleteInterview}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#22C55E] px-6 py-3 text-xs font-bold text-[#000000] shadow-sm transition hover:bg-[#22C55E]/90"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#22C55E] px-6 py-3 text-xs font-bold text-[var(--inv-text)] shadow-sm transition hover:bg-[#22C55E]/90"
             >
               <CheckSquare className="h-4 w-4" />
               Complete Interview

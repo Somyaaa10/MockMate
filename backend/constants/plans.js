@@ -5,15 +5,15 @@ const PLANS = {
     resumeAnalysis: true,
     advancedFeedback: false,
     peerInterview: true,
-    recording: true,
+    recording: false,
   },
   PRO: {
     name: "PRO",
-    interviewLimit: 20,
+    interviewLimit: 1000,
     resumeAnalysis: true,
     advancedFeedback: true,
     peerInterview: true,
-    recording: true,
+    recording: false,
   },
 };
 

@@ -142,7 +142,7 @@ function ResumeTab() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-[#8B5CF6]" />
+        <Loader2 className="h-6 w-6 animate-spin text-[#F97316]" />
       </div>
     );
   }
@@ -151,8 +151,8 @@ function ResumeTab() {
     <div className="space-y-6 max-w-3xl mx-auto">
       {/* Header */}
       <div>
-        <h1 className="text-xl font-bold text-[#F5F5F5]">Resume</h1>
-        <p className="text-[13px] text-[#A1A1AA] mt-0.5">
+        <h1 className="text-xl font-bold text-[var(--text-primary)]">Resume</h1>
+        <p className="text-[13px] text-[var(--text-secondary)] mt-0.5">
           Upload your resume to get personalized AI interview questions.
         </p>
       </div>
@@ -205,26 +205,26 @@ function ResumeTab() {
           className={`saas-card rounded-2xl border-dashed p-8 text-center cursor-pointer transition-all duration-150 ${
             isDragging
               ? "border-[rgba(139,92,246,0.45)] bg-[rgba(139,92,246,0.06)]"
-              : "hover:border-[rgba(255,255,255,0.15)]"
+              : "hover:border-[var(--border-strong)]"
           }`}
         >
           {uploading ? (
             <div className="flex flex-col items-center gap-3">
-              <Loader2 className="h-8 w-8 animate-spin text-[#8B5CF6]" />
-              <p className="text-[13px] text-[#A1A1AA]">Uploading resume...</p>
+              <Loader2 className="h-8 w-8 animate-spin text-[#F97316]" />
+              <p className="text-[13px] text-[var(--text-secondary)]">Uploading resume...</p>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[rgba(255,255,255,0.08)] bg-[#151515]">
-                <Upload className="h-5 w-5 text-[#8B5CF6]" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[var(--border-subtle)] bg-[var(--card-elevated)]">
+                <Upload className="h-5 w-5 text-[#F97316]" />
               </div>
               <div>
-                <p className="text-[14px] font-semibold text-[#F5F5F5]">
+                <p className="text-[14px] font-semibold text-[var(--text-primary)]">
                   Drag and drop your PDF here
                 </p>
-                <p className="text-[12px] text-[#71717A] mt-0.5">or click to choose a file</p>
+                <p className="text-[12px] text-[var(--text-muted)] mt-0.5">or click to choose a file</p>
               </div>
-              <p className="text-[11px] text-[#71717A]">PDF · Max 5 MB</p>
+              <p className="text-[11px] text-[var(--text-muted)]">PDF · Max 5 MB</p>
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
@@ -240,10 +240,10 @@ function ResumeTab() {
       {/* Resume List */}
       {resumes.length > 0 && (
         <div className="space-y-2">
-          <h2 className="text-[11px] font-semibold uppercase tracking-widest text-[#71717A]">
+          <h2 className="text-[11px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
             Uploaded Resumes
           </h2>
-          <div className="saas-card rounded-2xl divide-y divide-[rgba(255,255,255,0.06)]">
+          <div className="saas-card rounded-2xl divide-y divide-[var(--border-subtle)]">
             {resumes.map((resume) => (
               <div
                 key={resume._id}
@@ -251,14 +251,14 @@ function ResumeTab() {
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-[rgba(139,92,246,0.10)]">
-                    <FileText className="h-4 w-4 text-[#8B5CF6]" />
+                    <FileText className="h-4 w-4 text-[#F97316]" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[13px] font-medium text-[#F5F5F5] truncate">
+                    <p className="text-[13px] font-medium text-[var(--text-primary)] truncate">
                       {resume.originalName || resume.fileName || "Resume.pdf"}
                     </p>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[11px] text-[#71717A]">
+                      <span className="text-[11px] text-[var(--text-muted)]">
                         Uploaded {new Date(resume.createdAt).toLocaleDateString()}
                       </span>
                       {resume.analyzedAt && (
@@ -281,14 +281,14 @@ function ResumeTab() {
                     {analyzingId === resume._id ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     ) : (
-                      <Sparkles className="h-3.5 w-3.5 text-[#8B5CF6]" />
+                      <Sparkles className="h-3.5 w-3.5 text-[#F97316]" />
                     )}
                     <span>{analyzingId === resume._id ? "Analyzing..." : resume.analyzedAt ? "View Analysis" : "Analyze"}</span>
                   </button>
                   <button
                     onClick={() => handleDelete(resume._id)}
                     disabled={deletingId === resume._id}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-[rgba(255,255,255,0.08)] bg-[#151515] text-[#71717A] hover:bg-[rgba(239,68,68,0.08)] hover:text-[#EF4444] hover:border-[rgba(239,68,68,0.20)] transition-colors disabled:opacity-50"
+                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--border-subtle)] bg-[var(--card-elevated)] text-[var(--text-muted)] hover:bg-[rgba(239,68,68,0.08)] hover:text-[#EF4444] hover:border-[rgba(239,68,68,0.20)] transition-colors disabled:opacity-50"
                     title="Delete resume"
                   >
                     {deletingId === resume._id ? (

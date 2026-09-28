@@ -1,99 +1,35 @@
 import { useEffect, useState } from "react";
-import {
-  Check,
-  Crown,
-  Loader2,
-  AlertCircle,
-  CheckCircle2,
-  Bot,
-  Users,
-  FileText,
-  Video,
-  Zap,
-  Building2,
-} from "lucide-react";
+import { Bot, Building2, FileText, Video, Users } from "lucide-react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { API_BASE_URL, RAZORPAY_KEY_ID } from "../config/config";
+import { Alert, Card, Section } from "./dashboard/DashboardPrimitives";
+import {
+  CurrentPlanBanner,
+  PlanFeatureTile,
+  PricingCard,
+  PricingCardSkeleton,
+} from "./dashboard/PricingCard";
 
-/* ------------------------------------------------------------------
-   Usage Row
-   ------------------------------------------------------------------ */
-function UsageRow({ icon: Icon, label, value }) {
-  return (
-    <div className="flex items-center justify-between py-3 border-b border-[rgba(255,255,255,0.06)] last:border-0">
-      <div className="flex items-center gap-3">
-        <Icon className="h-3.5 w-3.5 text-[#71717A] flex-shrink-0" />
-        <span className="text-[13px] font-medium text-[#F5F5F5]">{label}</span>
-      </div>
-      <span className="text-[12px] font-medium text-[#A1A1AA] font-mono">{value}</span>
-    </div>
-  );
-}
+const TILE_ACCENT = {
+  Bot: "#60A5FA",
+  Users: "#34D399",
+  FileText: "#C084FC",
+  Video: "#FBBF24",
+};
 
-/* ------------------------------------------------------------------
-   Plan Card
-   ------------------------------------------------------------------ */
-function PlanCard({ name, price, sub, features, actionLabel, onAction, isActive, isRecommended, disabled }) {
-  return (
-    <div
-      className={`relative rounded-2xl p-5 flex flex-col gap-5 ${
-        isRecommended
-          ? "bg-[#101010] border-2 border-[#8B5CF6] shadow-[0_0_30px_rgba(139,92,246,0.12)]"
-          : "saas-card"
-      }`}
-    >
-      {isRecommended && (
-        <div className="absolute -top-3 left-5 btn-primary rounded-full px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider">
-          Recommended
-        </div>
-      )}
+const TILE_TINT = {
+  Bot: "rgba(59,130,246,0.12)",
+  Users: "rgba(16,185,129,0.12)",
+  FileText: "rgba(168,85,247,0.12)",
+  Video: "rgba(245,158,11,0.12)",
+};
 
-      <div className="space-y-1">
-        <h3 className="text-[14px] font-bold text-[#F5F5F5]">{name}</h3>
-        <p className="text-[12px] text-[#71717A]">{sub}</p>
-      </div>
-
-      <div className="flex items-baseline gap-1">
-        <span className="text-2xl font-bold text-[#F5F5F5] font-mono">{price}</span>
-        {price !== "Custom" && (
-          <span className="text-[12px] text-[#71717A]">/ month</span>
-        )}
-      </div>
-
-      <ul className="space-y-2">
-        {features.map((f, i) => (
-          <li key={i} className="flex items-center gap-2 text-[12px] text-[#A1A1AA]">
-            <Check className="h-3.5 w-3.5 text-[#8B5CF6] flex-shrink-0" />
-            <span>{f}</span>
-          </li>
-        ))}
-      </ul>
-
-      <button
-        onClick={onAction}
-        disabled={disabled || isActive}
-        className={`w-full rounded-xl py-2.5 text-[13px] font-semibold transition-all disabled:cursor-not-allowed ${
-          isActive
-            ? "border border-[rgba(255,255,255,0.08)] bg-[#151515] text-[#71717A] cursor-default"
-            : isRecommended
-            ? "btn-primary"
-            : "btn-secondary"
-        }`}
-      >
-        {actionLabel}
-      </button>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------
-   Main Component
-   ------------------------------------------------------------------ */
 function SubscriptionTab() {
-  const { user, token } = useAuth();
+  const { user, token, refreshUser } = useAuth();
 
   const [subscription, setSubscription] = useState(null);
+  const [quota, setQuota] = useState(null);
   const [loadingSub, setLoadingSub] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [successMsg, setSuccessMsg] = useState(null);
@@ -102,12 +38,15 @@ function SubscriptionTab() {
   const isSubActive =
     subscription?.status === "active" ||
     subscription?.status === "authenticated" ||
-    user?.isPremium === true;
+    user?.isPremium === true ||
+    quota?.isPremium === true;
 
   const currentPlanName = isSubActive ? "PRO" : "FREE";
 
+  /* ---------------- Data Fetching ---------------- */
   useEffect(() => {
     if (!token) return;
+
     const fetchSub = async () => {
       try {
         setLoadingSub(true);
@@ -115,18 +54,35 @@ function SubscriptionTab() {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.data?.data) setSubscription(res.data.data);
-      } catch (err) {
-        console.error("Subscription fetch error:", err);
+      } catch {
+        /* Fallback to user.isPremium */
       } finally {
         setLoadingSub(false);
       }
     };
+
+    const fetchQuota = async () => {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/dashboard`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.data?.data) setQuota(res.data.data);
+      } catch {
+        /* Fallback */
+      }
+    };
+
     fetchSub();
+    fetchQuota();
   }, [token]);
 
+  /* ---------------- Razorpay SDK Loader ---------------- */
   const loadRazorpayScript = () =>
     new Promise((resolve) => {
-      if (window.Razorpay) { resolve(true); return; }
+      if (window.Razorpay) {
+        resolve(true);
+        return;
+      }
       const script = document.createElement("script");
       script.src = "https://checkout.razorpay.com/v1/checkout.js";
       script.onload = () => resolve(true);
@@ -134,14 +90,29 @@ function SubscriptionTab() {
       document.body.appendChild(script);
     });
 
+  /* ---------------- Upgrade Handler ---------------- */
   const handleUpgradePlan = async () => {
-    if (!token) return;
+    if (!token) {
+      setErrorMsg("Please log in to upgrade your subscription.");
+      return;
+    }
+
+    if (isSubActive) {
+      setErrorMsg("You already have an active Pro subscription.");
+      return;
+    }
+
+    if (!RAZORPAY_KEY_ID) {
+      setErrorMsg("Payment configuration is unavailable. Please try again later.");
+      return;
+    }
+
     setErrorMsg(null);
     setSuccessMsg(null);
 
     const loaded = await loadRazorpayScript();
     if (!loaded) {
-      setErrorMsg("Failed to load payment SDK. Please check your internet connection.");
+      setErrorMsg("Failed to load Razorpay payment SDK. Please check your internet connection.");
       return;
     }
 
@@ -153,15 +124,22 @@ function SubscriptionTab() {
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
       const subData = createRes.data?.data;
-      const razorpaySubId = subData?.razorpaySubscriptionId;
-      if (!razorpaySubId) throw new Error("Razorpay subscription ID not generated");
+      if (!subData) throw new Error("Could not initialize payment with server.");
+
+      const isOrder = Boolean(subData.razorpayOrderId);
+      const targetId = subData.razorpaySubscriptionId || subData.razorpayOrderId;
+
+      if (!targetId) throw new Error("Payment transaction ID missing.");
 
       const options = {
         key: RAZORPAY_KEY_ID,
-        subscription_id: razorpaySubId,
+        ...(isOrder
+          ? { order_id: subData.razorpayOrderId, amount: subData.amount || 290000, currency: subData.currency || "INR" }
+          : { subscription_id: subData.razorpaySubscriptionId }),
         name: "MockMate",
-        description: "MockMate Pro Monthly Subscription",
+        description: "MockMate Pro Plan Subscription",
         handler: async (paymentResponse) => {
           try {
             const verifyRes = await axios.post(
@@ -169,133 +147,232 @@ function SubscriptionTab() {
               {
                 razorpayPaymentId: paymentResponse.razorpay_payment_id,
                 razorpaySubscriptionId: paymentResponse.razorpay_subscription_id,
+                razorpayOrderId: paymentResponse.razorpay_order_id,
                 razorpaySignature: paymentResponse.razorpay_signature,
               },
               { headers: { Authorization: `Bearer ${token}` } }
             );
+
             if (verifyRes.data?.data) {
               setSubscription(verifyRes.data.data);
+              setQuota((prev) => ({ ...prev, isPremium: true, plan: "PRO", aiInterviewsLimit: 20 }));
+              if (typeof refreshUser === "function") {
+                await refreshUser();
+              }
               setSuccessMsg("Payment verified! Your Pro subscription is now active.");
             }
-          } catch (verifyErr) {
-            setErrorMsg(verifyErr.response?.data?.message || "Payment verification failed.");
+          } catch (err) {
+            setErrorMsg(err.response?.data?.message || "Payment verification failed. Please contact support.");
           } finally {
             setProcessing(false);
           }
         },
-        prefill: { name: user?.fullName || "", email: user?.email || "" },
-        theme: { color: "#8b5cf6" },
-        modal: { ondismiss: () => setProcessing(false) },
+        prefill: {
+          name: user?.fullName || "",
+          email: user?.email || "",
+        },
+        theme: { color: "#ec4899" },
+        modal: {
+          ondismiss: () => {
+            setProcessing(false);
+            setErrorMsg("Payment checkout was cancelled.");
+          },
+        },
       };
 
-      new window.Razorpay(options).open();
+      const razorpayInstance = new window.Razorpay(options);
+      razorpayInstance.on("payment.failed", function (response) {
+        setProcessing(false);
+        setErrorMsg(response?.error?.description || "Payment failed. Please try again.");
+      });
+
+      razorpayInstance.open();
     } catch (err) {
-      setErrorMsg(err.response?.data?.message || "Subscription creation failed. Please try again.");
       setProcessing(false);
+      setErrorMsg(err.response?.data?.message || err.message || "Failed to create payment session. Please try again.");
     }
   };
 
-  const usageRows = [
-    { label: "AI Interviews", value: isSubActive ? "20 / month" : "2 / month", icon: Bot },
-    { label: "Peer Interviews", value: isSubActive ? "Unlimited" : "100 / month", icon: Users },
-    { label: "Resume Analysis", value: isSubActive ? "Unlimited" : "1 / month", icon: FileText },
-    { label: "Session Recordings", value: isSubActive ? "Unlimited" : "5 stored", icon: Video },
+  /* ---------------- Dynamic Plan Figures ---------------- */
+  const aiLimit = quota?.aiInterviewsLimit ?? (isSubActive ? 1000 : 2);
+  const aiUsed = quota?.aiInterviewsUsed ?? 0;
+
+  const planFeatures = [
+    {
+      icon: Bot,
+      accent: TILE_ACCENT.Bot,
+      name: "AI Interview",
+      quota: isSubActive ? "Unlimited" : aiLimit,
+      used: aiUsed,
+      unlimited: isSubActive,
+    },
+    {
+      icon: Users,
+      accent: TILE_ACCENT.Users,
+      name: "One To One Interview",
+      quota: "Unlimited",
+      used: null,
+      unlimited: true,
+    },
+    {
+      icon: FileText,
+      accent: TILE_ACCENT.FileText,
+      name: "Resume Analyzer",
+      quota: isSubActive ? "Unlimited" : 1,
+      used: null,
+      unlimited: isSubActive,
+    },
   ];
 
-  return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-[#F5F5F5]">Plan</h1>
-          <p className="text-[13px] text-[#A1A1AA] mt-0.5">
-            {isSubActive
-              ? "You have full access to all Pro features."
-              : "You're currently on the Free plan."}
-          </p>
-        </div>
-        <span
-          className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide ${
-            isSubActive
-              ? "border-[#22C55E]/25 bg-[#22C55E]/08 text-[#22C55E]"
-              : "border-[rgba(255,255,255,0.08)] bg-[#101010] text-[#A1A1AA]"
-          }`}
-        >
-          <Crown className="h-3 w-3" />
-          {currentPlanName}
-        </span>
-      </div>
+  let expiryFormatted = "";
+  if (isSubActive && subscription?.currentEnd) {
+    const endDate = new Date(subscription.currentEnd);
+    expiryFormatted = ` · Active until ${endDate.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}`;
+  }
 
-      {/* Feedback Messages */}
+  return (
+    <div className="mx-auto max-w-5xl space-y-6">
+      {/* ── Current subscription ── */}
+      <CurrentPlanBanner
+        planName={currentPlanName}
+        isPremium={isSubActive}
+        description={
+          isSubActive ? (
+            <>You have full access to all Pro features.{expiryFormatted}</>
+          ) : (
+            <>
+              You are currently on the{" "}
+              <span className="mm-grad-text font-bold">FREE</span> plan
+            </>
+          )
+        }
+      />
+
+      {/* Feedback */}
       {successMsg && (
-        <div className="flex items-center gap-2 rounded-xl border border-[#22C55E]/20 bg-[#22C55E]/08 px-4 py-3 text-[13px] text-[#22C55E]">
-          <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
+        <Alert tone="success" onDismiss={() => setSuccessMsg(null)}>
           {successMsg}
-        </div>
+        </Alert>
       )}
       {errorMsg && (
-        <div className="flex items-center gap-2 rounded-xl border border-[#EF4444]/20 bg-[#EF4444]/08 px-4 py-3 text-[13px] text-[#EF4444]">
-          <AlertCircle className="h-4 w-4 flex-shrink-0" />
+        <Alert tone="error" onDismiss={() => setErrorMsg(null)}>
           {errorMsg}
-        </div>
+        </Alert>
       )}
 
-      {/* Plan Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <PlanCard
-          name="FREE"
-          price="$0"
-          sub="For getting started"
-          features={[
-            "2 AI Mock Interviews / mo",
-            "Peer 1:1 Video Practice",
-            "1 Resume Analysis",
-            "Basic Score Reports",
-          ]}
-          actionLabel={isSubActive ? "Free Tier" : "Current Plan"}
-          isActive={!isSubActive}
-          disabled
-        />
-        <PlanCard
-          name="PRO"
-          price="$29"
-          sub="For serious preparation"
-          features={[
-            "20 AI Mock Interviews / mo",
-            "Unlimited Peer Practice",
-            "Unlimited Resume Analysis",
-            "Detailed Performance Analytics",
-            "WhatsApp Notifications",
-          ]}
-          actionLabel={processing ? "Processing..." : isSubActive ? "Current Plan" : "Upgrade to Pro"}
-          onAction={handleUpgradePlan}
-          isActive={isSubActive}
-          isRecommended
-          disabled={processing}
-        />
-        <PlanCard
-          name="ENTERPRISE"
-          price="Custom"
-          sub="For organizations & teams"
-          features={[
-            "Custom AI Interview Questions",
-            "Team & Cohort Analytics",
-            "Dedicated Support & SLA",
-          ]}
-          actionLabel="Contact Sales"
-          onAction={() => window.open("mailto:support@mockmate.com", "_blank")}
-        />
-      </div>
+      {/* ── Choose your plan ── */}
+      <Section title="Choose Your Plan">
+        {loadingSub ? (
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <PricingCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <PricingCard
+              name="FREE"
+              price="$0"
+              tagline="Perfect for getting started"
+              features={[
+                `${aiLimit} AI mock interviews / month`,
+                "Peer 1:1 video practice",
+                "1 resume analysis",
+                "Basic score reports",
+              ]}
+              actionLabel={isSubActive ? "Free Tier" : "Current Plan"}
+              isCurrent={!isSubActive}
+              disabled
+            />
 
-      {/* Plan Usage */}
-      <div className="saas-card rounded-2xl p-6">
-        <h3 className="text-[11px] font-semibold uppercase tracking-widest text-[#71717A] mb-4">
-          Plan Usage & Limits
-        </h3>
-        {usageRows.map((row, i) => (
-          <UsageRow key={i} icon={row.icon} label={row.label} value={row.value} />
-        ))}
-      </div>
+            <PricingCard
+              name="PRO"
+              price="$29"
+              tagline="For professionals and growing teams"
+              features={[
+                "1,000 AI mock interviews / month",
+                "Unlimited peer practice",
+                "Unlimited resume analysis",
+                "Detailed performance analytics",
+                "WhatsApp notifications",
+              ]}
+              actionLabel={
+                processing
+                  ? "Processing…"
+                  : isSubActive
+                  ? "Current Plan"
+                  : "Upgrade to Pro"
+              }
+              onAction={handleUpgradePlan}
+              isCurrent={isSubActive}
+              isFeatured
+              disabled={processing || isSubActive}
+              loadingAction={processing}
+            />
+
+            <PricingCard
+              name="ENTERPRISE"
+              price="Custom"
+              tagline="Advanced features for large organizations"
+              features={[
+                "Custom AI interview questions",
+                "Team & cohort analytics",
+                "Dedicated support & SLA",
+              ]}
+              actionLabel="Contact Sales"
+              onAction={() => window.open("mailto:support@mockmate.com", "_blank")}
+            />
+          </div>
+        )}
+      </Section>
+
+      {/* ── Plan features ── */}
+      <Section title="Plan Features">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {planFeatures.map((f) => (
+            <PlanFeatureTile
+              key={f.name}
+              name={f.name}
+              quota={f.quota}
+              unlimited={f.unlimited}
+            />
+          ))}
+        </div>
+      </Section>
+
+      {/* ── Notes ── */}
+      <Card className="p-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-center gap-3">
+            <span
+              className="mm-icon-tile h-10 w-10 shrink-0"
+              style={{
+                color: "#FBBF24",
+                backgroundColor: TILE_TINT.Building2,
+                borderColor: "rgba(245,158,11,0.28)",
+              }}
+              aria-hidden="true"
+            >
+              <Building2 className="h-[18px] w-[18px]" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[13.5px] font-semibold text-[var(--mm-text)]">
+                Need a custom plan?
+              </p>
+              <p className="mt-0.5 text-[12px] text-[var(--mm-text-3)]">
+                We tailor interview tracks and analytics for larger teams.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => window.open("mailto:support@mockmate.com", "_blank")}
+            className="mm-btn mm-btn-ghost shrink-0 px-4 py-2.5 text-[12.5px]"
+          >
+            Contact Sales
+          </button>
+        </div>
+      </Card>
     </div>
   );
 }

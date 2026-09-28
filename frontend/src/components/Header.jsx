@@ -1,72 +1,235 @@
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Crown } from "lucide-react";
+import { MessagesSquare, Menu, X } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import ThemeToggle from "./common/ThemeToggle";
+
+const NAV_LINKS = [
+  { href: "#features", label: "Features" },
+  { href: "#how-it-works", label: "How It Works" },
+  { href: "#pricing", label: "Pricing" },
+];
 
 function Header() {
   const { isAuthenticated } = useAuth();
+  const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState(null);
+
+  // Track scroll to switch the navbar into its "scrolled" surface state
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 16);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Highlight the nav item for the section currently in view.
+  const sectionElsRef = useRef([]);
+  useEffect(() => {
+    sectionElsRef.current = NAV_LINKS.map((link) =>
+      document.getElementById(link.href.slice(1))
+    );
+    const sections = sectionElsRef.current.filter(Boolean);
+    if (sections.length === 0) return;
+
+    if (!("IntersectionObserver" in window)) {
+      const onScroll = () => {
+        const probe = 132;
+        let current = null;
+        for (const el of sectionElsRef.current) {
+          if (el && el.getBoundingClientRect().top <= probe) current = el.id;
+        }
+        setActiveSection(current);
+      };
+      onScroll();
+      window.addEventListener("scroll", onScroll, { passive: true });
+      return () => window.removeEventListener("scroll", onScroll);
+    }
+
+    const bandTopPx = () => window.innerHeight * 0.1;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        let best = null;
+        let bestTop = Infinity;
+        for (const entry of entries) {
+          if (entry.isIntersecting && entry.boundingClientRect.top < bestTop) {
+            best = entry.target.id;
+            bestTop = entry.boundingClientRect.top;
+          }
+        }
+        if (best) {
+          setActiveSection(best);
+        } else if (
+          sections[0] &&
+          sections[0].getBoundingClientRect().top > bandTopPx()
+        ) {
+          setActiveSection(null);
+        }
+      },
+      { rootMargin: "-10% 0px -60% 0px", threshold: 0 }
+    );
+
+    sections.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [menuOpen]);
+
+  const closeMenu = () => setMenuOpen(false);
+  const hasSurface = scrolled || menuOpen;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[rgba(255,255,255,0.08)] bg-[#050505]/85 backdrop-blur-xl transition-all duration-300">
-      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-8">
+    <header
+      className={`site-navbar w-full ${
+        hasSurface ? "site-navbar-scrolled" : ""
+      }`}
+    >
+      <div className="navbar-inner mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-3 group">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#111113] border border-[rgba(255,255,255,0.08)] shadow-sm text-[#8B5CF6] transition duration-200 group-hover:border-[rgba(139,92,246,0.35)] group-hover:shadow-[0_0_15px_rgba(139,92,246,0.2)]">
-            <Crown className="h-5 w-5" />
+        <Link to="/" onClick={closeMenu} className="flex items-center gap-2.5 group">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#F97316] to-[#EC4899] text-white shadow-sm transition duration-200 group-hover:scale-105">
+            <MessagesSquare className="h-4.5 w-4.5" />
           </div>
-          <span className="text-xl font-bold tracking-tight text-[#F5F5F5] transition group-hover:text-white">
+          <span className="whitespace-nowrap text-lg font-bold tracking-tight text-[var(--text-primary)] transition group-hover:text-[var(--text-accent)] sm:text-xl">
             MockMate
           </span>
         </Link>
 
-        {/* Navigation Links */}
-        <nav className="hidden items-center gap-2 md:flex">
-          <a
-            href="#features"
-            className="rounded-lg px-3 py-1.5 text-sm font-medium text-[#A1A1AA] transition duration-200 hover:bg-[#111113] hover:text-[#F5F5F5]"
-          >
-            Features
-          </a>
-          <a
-            href="#how-it-works"
-            className="rounded-lg px-3 py-1.5 text-sm font-medium text-[#A1A1AA] transition duration-200 hover:bg-[#111113] hover:text-[#F5F5F5]"
-          >
-            How It Works
-          </a>
-          <a
-            href="#pricing"
-            className="rounded-lg px-3 py-1.5 text-sm font-medium text-[#A1A1AA] transition duration-200 hover:bg-[#111113] hover:text-[#F5F5F5]"
-          >
-            Pricing
-          </a>
+        {/* Desktop Navigation Links */}
+        <nav className="hidden items-center gap-1.5 md:flex">
+          {NAV_LINKS.map((link) => {
+            const isActive = activeSection === link.href.slice(1);
+            return (
+              <a
+                key={link.href}
+                href={link.href}
+                onClick={closeMenu}
+                aria-current={isActive ? "true" : undefined}
+                className={`relative rounded-full px-3.5 py-1.5 text-sm font-medium transition duration-200 ${
+                  isActive
+                    ? "text-[var(--text-accent)] bg-[var(--card-elevated-2)]"
+                    : "text-[var(--text-secondary)] hover:bg-[var(--card-bg-3)] hover:text-[var(--text-primary)]"
+                }`}
+              >
+                {link.label}
+              </a>
+            );
+          })}
         </nav>
 
-        {/* Auth Buttons */}
-        <div className="flex items-center gap-4">
+        {/* Desktop Auth Buttons */}
+        <div className="hidden items-center gap-3 md:flex">
+          <ThemeToggle />
           {isAuthenticated ? (
             <Link
               to="/dashboard"
-              className="rounded-xl bg-[#8B5CF6] px-5 py-2.5 text-sm font-semibold text-[#FFFFFF] shadow-md shadow-purple-900/20 btn-saas-primary hover:bg-[#7C3AED]"
+              className="rounded-full bg-gradient-to-r from-[#F97316] to-[#EC4899] px-5 py-2 text-sm font-semibold text-white shadow-sm transition duration-200 hover:opacity-95 hover:shadow-md"
             >
-              Go to Dashboard
+              Go to Dashboard →
             </Link>
           ) : (
             <>
               <Link
                 to="/login"
-                className="rounded-lg px-3 py-2 text-sm font-medium text-[#A1A1AA] transition duration-200 hover:bg-[#111113] hover:text-[#F5F5F5]"
+                className="rounded-full px-4 py-2 text-sm font-medium text-[var(--text-secondary)] transition duration-200 hover:text-[var(--text-primary)]"
               >
                 Sign In
               </Link>
               <Link
                 to="/register"
-                className="rounded-xl bg-[#8B5CF6] px-5 py-2.5 text-sm font-semibold text-[#FFFFFF] shadow-md shadow-purple-900/20 btn-saas-primary hover:bg-[#7C3AED]"
+                className="rounded-full bg-gradient-to-r from-[#F97316] to-[#EC4899] px-5 py-2 text-sm font-semibold text-white shadow-sm transition duration-200 hover:opacity-95 hover:shadow-md"
               >
-                Get Started
+                Get Started →
               </Link>
             </>
           )}
         </div>
+
+        {/* Mobile: theme toggle + menu button */}
+        <div className="flex items-center gap-2 md:hidden">
+          <ThemeToggle />
+          <button
+            type="button"
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
+            aria-controls="landing-mobile-nav"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border-subtle)] bg-[var(--card-bg-3)] text-[var(--text-secondary)] transition duration-200 hover:text-[var(--text-primary)]"
+          >
+            {menuOpen ? <X className="h-4.5 w-4.5" /> : <Menu className="h-4.5 w-4.5" />}
+          </button>
+        </div>
       </div>
+
+      {/* Mobile Menu */}
+      {menuOpen && (
+        <div
+          id="landing-mobile-nav"
+          className="fade-in border-t border-[var(--border-subtle)] bg-[var(--bg-main)]/95 px-4 pb-5 pt-2 backdrop-blur-xl md:hidden"
+        >
+          <nav className="flex flex-col">
+            {NAV_LINKS.map((link) => {
+              const isActive = activeSection === link.href.slice(1);
+              return (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  onClick={closeMenu}
+                  aria-current={isActive ? "true" : undefined}
+                  className={`flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition duration-200 ${
+                    isActive
+                      ? "bg-[var(--card-bg-3)] text-[var(--text-accent)]"
+                      : "text-[var(--text-secondary)] hover:bg-[var(--card-bg-3)] hover:text-[var(--text-primary)]"
+                  }`}
+                >
+                  {link.label}
+                  {isActive && (
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#F97316]" />
+                  )}
+                </a>
+              );
+            })}
+          </nav>
+
+          <div className="mt-2 flex flex-col gap-2.5 border-t border-[var(--border-subtle)] pt-4">
+            {isAuthenticated ? (
+              <Link
+                to="/dashboard"
+                onClick={closeMenu}
+                className="rounded-xl bg-gradient-to-r from-[#F97316] to-[#EC4899] px-5 py-2.5 text-center text-sm font-semibold text-white shadow-md shadow-orange-900/20 btn-saas-primary hover:opacity-95"
+              >
+                Go to Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  onClick={closeMenu}
+                  className="rounded-lg px-3 py-2 text-center text-sm font-medium text-[var(--text-secondary)] transition duration-200 hover:bg-[var(--card-bg-3)] hover:text-[var(--text-primary)]"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/register"
+                  onClick={closeMenu}
+                  className="rounded-xl bg-gradient-to-r from-[#F97316] to-[#EC4899] px-5 py-2.5 text-center text-sm font-semibold text-white shadow-md shadow-orange-900/20 btn-saas-primary hover:opacity-95"
+                >
+                  Get Started
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </header>
   );
 }

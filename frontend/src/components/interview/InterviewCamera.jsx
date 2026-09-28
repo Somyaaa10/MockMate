@@ -115,9 +115,9 @@ export default function InterviewCamera({
     : null;
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-[#262626] bg-[#0A0A0A] shadow-2xl">
+    <div className="relative overflow-hidden rounded-2xl border border-[var(--strong-line)] bg-[var(--bg-surface)] shadow-2xl">
       {/* Video Container */}
-      <div className="relative aspect-video w-full overflow-hidden bg-[#000000]">
+      <div className="relative aspect-video w-full overflow-hidden bg-[var(--bg-void)]">
         <video
           ref={videoRef}
           autoPlay
@@ -129,7 +129,7 @@ export default function InterviewCamera({
         />
 
         {(!camEnabled || error) && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0A0A0A] p-4 text-center">
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-[var(--bg-surface)] p-4 text-center">
             {error ? (
               <>
                 <AlertCircle className="h-8 w-8 text-[#FBBF24] mb-2" />
@@ -137,12 +137,12 @@ export default function InterviewCamera({
               </>
             ) : (
               <>
-                <VideoOff className="h-8 w-8 text-[#737373] mb-2" />
-                <p className="text-xs text-[#A1A1A1] mb-3">Camera Turned Off</p>
+                <VideoOff className="h-8 w-8 text-[var(--text-muted-2)] mb-2" />
+                <p className="text-xs text-[var(--text-secondary-2)] mb-3">Camera Turned Off</p>
                 <button
                   type="button"
                   onClick={enableCamera}
-                  className="flex items-center gap-1.5 rounded-lg border border-[rgba(139,92,246,0.35)] bg-[rgba(139,92,246,0.1)] px-3 py-1.5 text-xs font-semibold text-[#8B5CF6] hover:bg-[rgba(139,92,246,0.2)] transition"
+                  className="flex items-center gap-1.5 rounded-lg border border-[rgba(249,115,22,0.35)] bg-[rgba(249,115,22,0.1)] px-3 py-1.5 text-xs font-semibold text-[#F97316] hover:bg-[rgba(249,115,22,0.2)] transition"
                 >
                   <Video className="h-3.5 w-3.5" />
                   Turn Camera On
@@ -153,15 +153,15 @@ export default function InterviewCamera({
         )}
 
         {/* Candidate label */}
-        <div className="absolute bottom-3 left-3 rounded-md border border-[#262626] bg-[#000000]/80 px-2.5 py-1 text-[10px] font-semibold text-[#A1A1A1] backdrop-blur-md">
+        <div className="absolute bottom-3 left-3 rounded-md border border-[var(--strong-line)] bg-[rgba(0,0,0,0.80)] px-2.5 py-1 text-[10px] font-semibold text-[var(--text-secondary-2)] backdrop-blur-md">
           You
         </div>
 
         {/* Camera status dot */}
         {statusDot && (
-          <div className="absolute top-2 left-2 flex items-center gap-1.5 rounded-full border border-[rgba(255,255,255,0.08)] bg-[#000000]/75 px-2 py-1 backdrop-blur-sm">
+          <div className="absolute top-2 left-2 flex items-center gap-1.5 rounded-full border border-[var(--border-subtle)] bg-[rgba(0,0,0,0.75)] px-2 py-1 backdrop-blur-sm">
             <span className={`h-1.5 w-1.5 rounded-full ${statusDot.color} ${statusDot.pulse ? "animate-pulse" : ""}`} />
-            <span className="text-[9px] font-semibold text-[#A1A1A1]">{statusDot.label}</span>
+            <span className="text-[9px] font-semibold text-[var(--text-secondary-2)]">{statusDot.label}</span>
           </div>
         )}
 
@@ -172,7 +172,7 @@ export default function InterviewCamera({
             onClick={toggleMic}
             className={`flex h-8 w-8 items-center justify-center rounded-lg border backdrop-blur-md transition ${
               micEnabled
-                ? "border-[#262626] bg-[#000000]/80 text-[#FFFFFF] hover:bg-[#111111]"
+                ? "border-[var(--strong-line)] bg-[rgba(0,0,0,0.80)] text-[var(--text-primary-2)] hover:bg-[var(--card-bg-2)]"
                 : "border-[rgba(239,68,68,0.25)] bg-[rgba(239,68,68,0.10)] text-[#F87171]"
             }`}
             title={micEnabled ? "Mute Microphone" : "Unmute Microphone"}
@@ -185,7 +185,7 @@ export default function InterviewCamera({
             onClick={toggleCam}
             className={`flex h-8 w-8 items-center justify-center rounded-lg border backdrop-blur-md transition ${
               camEnabled
-                ? "border-[#262626] bg-[#000000]/80 text-[#FFFFFF] hover:bg-[#111111]"
+                ? "border-[var(--strong-line)] bg-[rgba(0,0,0,0.80)] text-[var(--text-primary-2)] hover:bg-[var(--card-bg-2)]"
                 : "border-[rgba(239,68,68,0.25)] bg-[rgba(239,68,68,0.10)] text-[#F87171]"
             }`}
             title={camEnabled ? "Turn Off Camera" : "Turn On Camera"}
