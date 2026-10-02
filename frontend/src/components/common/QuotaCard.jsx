@@ -6,22 +6,15 @@ function QuotaCard({ used = 0, limit = 2, plan = "FREE", onUpgrade }) {
   const isExhausted = used >= limit;
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-[var(--strong-line)] bg-[var(--bg-surface)] p-6 backdrop-blur-xl transition duration-300 hover:border-[var(--strong-line-2)]">
-      {/* Background Lighting Accent */}
-      <div
-        className={`absolute -top-12 -right-12 h-32 w-32 rounded-full blur-3xl opacity-20 pointer-events-none ${
-          isExhausted ? "bg-rose-500" : "bg-orange-500"
-        }`}
-      />
-
+    <div className="relative overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[var(--panel-shadow)] transition duration-300">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-400">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--primary-soft)] text-[var(--primary)] border border-[var(--border)]">
             <Zap className="h-4 w-4" />
           </div>
           <div>
-            <h4 className="text-sm font-bold text-[var(--text-primary-2)]">AI Interview Allowance</h4>
-            <p className="text-xs text-[var(--text-secondary-2)]">
+            <h4 className="text-sm font-bold text-[var(--text-primary)]">AI Interview Allowance</h4>
+            <p className="text-xs text-[var(--text-secondary)]">
               {plan === "PRO" ? "Monthly Pro Allocation" : "Free Plan Allocation"}
             </p>
           </div>
@@ -30,8 +23,8 @@ function QuotaCard({ used = 0, limit = 2, plan = "FREE", onUpgrade }) {
         <span
           className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider border ${
             plan === "PRO"
-              ? "border-orange-500/30 bg-orange-500/10 text-orange-400"
-              : "border-[var(--strong-line)] bg-[var(--chip-bg)] text-[var(--text-secondary-2)]"
+              ? "border-[var(--primary)] bg-[var(--primary-soft)] text-[var(--primary)]"
+              : "border-[var(--border)] bg-[var(--background-soft)] text-[var(--text-secondary)]"
           }`}
         >
           {plan === "PRO" && <Crown className="h-3 w-3" />}
@@ -41,12 +34,12 @@ function QuotaCard({ used = 0, limit = 2, plan = "FREE", onUpgrade }) {
 
       {/* Numerical Metrics */}
       <div className="flex items-baseline justify-between mb-2">
-        <span className="text-2xl font-black text-[var(--text-primary-2)]">
-          {used} <span className="text-xs font-semibold text-[var(--text-muted-2)]">/ {limit} used</span>
+        <span className="text-2xl font-black text-[var(--text-primary)]">
+          {used} <span className="text-xs font-semibold text-[var(--text-muted)]">/ {limit} used</span>
         </span>
         <span
           className={`text-xs font-bold ${
-            isExhausted ? "text-rose-400" : remaining === 1 ? "text-amber-400" : "text-emerald-400"
+            isExhausted ? "text-[var(--danger)]" : remaining === 1 ? "text-[var(--warning)]" : "text-[var(--success)]"
           }`}
         >
           {isExhausted ? "0 remaining" : `${remaining} remaining`}
@@ -54,26 +47,26 @@ function QuotaCard({ used = 0, limit = 2, plan = "FREE", onUpgrade }) {
       </div>
 
       {/* Progress Bar */}
-      <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--hover-bg)] mb-4">
+      <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--primary-soft)] mb-4">
         <div
           className={`h-full transition-all duration-500 ease-out rounded-full ${
             isExhausted
-              ? "bg-gradient-to-r from-rose-500 to-amber-500"
-              : "bg-gradient-to-r from-orange-500 to-pink-500"
+              ? "bg-[var(--danger)]"
+              : "bg-[var(--primary)]"
           }`}
           style={{ width: `${percentage}%` }}
         />
       </div>
 
       {/* Upgrade Prompt or Status Info */}
-      <div className="flex items-center justify-between pt-2 border-t border-[var(--faint-line)]">
+      <div className="flex items-center justify-between pt-2 border-t border-[var(--border)]">
         {isExhausted ? (
-          <div className="flex items-center gap-1.5 text-xs text-rose-400 font-medium">
+          <div className="flex items-center gap-1.5 text-xs text-[var(--danger)] font-medium">
             <AlertCircle className="h-3.5 w-3.5 shrink-0" />
             <span>Quota reached. Upgrade to Pro for 20 interviews/month.</span>
           </div>
         ) : (
-          <span className="text-xs text-[var(--text-muted-2)]">
+          <span className="text-xs text-[var(--text-muted)]">
             {percentage}% consumed
           </span>
         )}
@@ -82,7 +75,7 @@ function QuotaCard({ used = 0, limit = 2, plan = "FREE", onUpgrade }) {
           <button
             type="button"
             onClick={onUpgrade}
-            className="inline-flex items-center gap-1 text-xs font-bold text-orange-400 hover:text-orange-300 transition"
+            className="inline-flex items-center gap-1 text-xs font-bold text-[var(--primary)] hover:text-[var(--primary-hover)] transition"
           >
             <span>{isExhausted ? "Upgrade to Pro" : "View Plans"}</span>
             <ArrowUpRight className="h-3.5 w-3.5" />

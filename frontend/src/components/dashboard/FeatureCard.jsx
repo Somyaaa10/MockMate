@@ -9,14 +9,14 @@ import { normalizeFeatures } from "./featureRegistry";
 function QuotaValue({ quota }) {
   if (quota === null) {
     return (
-      <span className="inline-flex items-center gap-1 text-[var(--mm-text)]">
+      <span className="inline-flex items-center gap-1 text-[var(--text-primary)] font-mono">
         <InfinityIcon className="h-4 w-4" aria-hidden="true" />
         Unlimited
       </span>
     );
   }
-  if (quota === undefined) return <span className="text-[var(--mm-text-3)]">—</span>;
-  return <span className="text-[var(--mm-text)]">{quota}</span>;
+  if (quota === undefined) return <span className="text-[var(--text-muted)] font-mono">—</span>;
+  return <span className="text-[var(--text-primary)] font-mono">{quota}</span>;
 }
 
 /* ------------------------------------------------------------------
@@ -32,24 +32,19 @@ export function FeatureCard({ feature, onClick }) {
       type={onClick ? "button" : undefined}
       onClick={onClick}
       className={cx(
-        "mm-card mm-card-hover flex w-full flex-col p-5 text-left",
+        "group rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 text-left shadow-[var(--panel-shadow)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--primary)] hover:shadow-md flex w-full flex-col",
         onClick && "cursor-pointer"
       )}
     >
       {/* Top: Icon box + Title */}
       <div className="flex items-center gap-3.5">
         <span
-          className="mm-icon-tile grid h-11 w-11 shrink-0 place-items-center rounded-xl"
-          style={{
-            color: feature.accent,
-            backgroundColor: feature.tint,
-            borderColor: feature.ring,
-          }}
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--primary-soft)] text-[var(--primary)] transition duration-200 group-hover:bg-[var(--primary)] group-hover:text-white"
           aria-hidden="true"
         >
           <Icon className="h-5 w-5" />
         </span>
-        <h3 className="truncate font-display text-[15px] font-bold text-[var(--mm-text)]">
+        <h3 className="truncate font-display text-base font-bold text-[var(--text-primary)]">
           {feature.name}
         </h3>
       </div>
@@ -57,21 +52,21 @@ export function FeatureCard({ feature, onClick }) {
       {/* Rows: Level & Quota */}
       <div className="mt-5 space-y-3">
         <div className="flex items-center justify-between gap-3">
-          <span className="text-[13px] font-medium text-[var(--mm-text-2)]">
+          <span className="text-xs font-medium text-[var(--text-secondary)]">
             Level
           </span>
-          <span className="rounded-lg border border-[var(--mm-border)] bg-[var(--mm-card-2)] px-3 py-1 font-mono text-[11px] font-bold tracking-wider text-[var(--mm-text)] uppercase">
+          <span className="rounded-lg border border-[var(--border)] bg-[var(--background-soft)] px-2.5 py-1 font-mono text-[11px] font-semibold text-[var(--text-primary)] uppercase">
             {levelText}
           </span>
         </div>
 
-        <div className="border-t border-[var(--mm-border)] pt-3" />
+        <div className="border-t border-[var(--border)] pt-3" />
 
         <div className="flex items-center justify-between gap-3">
-          <span className="text-[13px] font-medium text-[var(--mm-text-2)]">
+          <span className="text-xs font-medium text-[var(--text-secondary)]">
             Quota
           </span>
-          <span className="rounded-lg border border-[var(--mm-border)] bg-[var(--mm-card-2)] px-3.5 py-1 font-mono text-[12px] font-bold text-[var(--mm-text)]">
+          <span className="rounded-lg border border-[var(--border)] bg-[var(--background-soft)] px-3 py-1 text-xs font-semibold text-[var(--text-primary)]">
             <QuotaValue quota={feature.quota} />
           </span>
         </div>
@@ -80,17 +75,16 @@ export function FeatureCard({ feature, onClick }) {
   );
 }
 
-
 /* ------------------------------------------------------------------
    Responsive feature grid
    ------------------------------------------------------------------ */
 export function FeatureGrid({ features, loading = false, onSelect }) {
   if (loading) {
     return (
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="mm-card flex h-[236px] flex-col justify-between p-5">
-            <Skeleton className="h-12 w-12 rounded-xl" />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-xs flex h-[200px] flex-col justify-between">
+            <Skeleton className="h-11 w-11 rounded-xl" />
             <div className="space-y-2.5">
               <Skeleton className="h-4 w-32" />
               <Skeleton className="h-3 w-full" />

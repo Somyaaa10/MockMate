@@ -6,13 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MockMate — AI Mock Interview Platform</title>
     <script>
-      // Apply saved theme before React mounts to avoid a flash of the wrong theme.
+      // Apply saved theme or system preference before React mounts to avoid flash of wrong theme
       (function () {
         try {
-          var t = localStorage.getItem("mockmate-theme");
-          if (t === "light" || t === "dark") {
-            document.documentElement.setAttribute("data-theme", t);
+          var saved = localStorage.getItem("mockmate-theme");
+          var theme = saved;
+          if (!theme || (theme !== "light" && theme !== "dark")) {
+            theme = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
           }
+          document.documentElement.setAttribute("data-theme", theme);
         } catch (e) {}
       })();
     </script>

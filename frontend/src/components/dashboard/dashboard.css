@@ -1,202 +1,70 @@
 /* =========================================
    MOCKMATE — DASHBOARD DESIGN SYSTEM
-   Scoped to `.mm-dash`. The dashboard root
-   remaps the legacy app tokens so every existing
-   component (tabs, modals, forms) inherits the new
-   palette automatically — without touching the
-   landing / auth pages.
+   Uses the global Fintech/SaaS Light & Dark Tokens
    ========================================= */
 
 .mm-dash {
-  /* ---- Surfaces ---- */
-  --mm-bg: #050505;
-  --mm-card: #111111;
-  --mm-card-2: #181818;
-  --mm-card-3: #212121;
-  --mm-border: #2A2A2A;
-  --mm-border-soft: #262626;
+  --mm-bg: var(--background);
+  --mm-card: var(--surface);
+  --mm-card-2: var(--surface-hover);
+  --mm-card-3: var(--background-soft);
+  --mm-border: var(--border);
+  --mm-border-soft: var(--border-soft);
 
-  /* ---- Brand ---- */
-  --mm-purple: #f97316;
-  --mm-pink: #ec4899;
-  --mm-blue: #fb923c;
-  --mm-green: #10b981;
-  --mm-orange: #f97316;
-  --mm-red: #f87171;
-  --mm-grad: linear-gradient(135deg, #f97316 0%, #ec4899 100%);
-  --mm-grad-soft: linear-gradient(135deg, #f97316 0%, #ec4899 100%);
+  --mm-purple: var(--primary);
+  --mm-pink: var(--primary-hover);
+  --mm-blue: var(--primary);
+  --mm-green: var(--success);
+  --mm-orange: var(--primary);
+  --mm-red: var(--danger);
+  --mm-grad: var(--primary);
+  --mm-grad-soft: var(--primary-soft);
 
-  /* ---- Text ---- */
-  --mm-text: #f8fafc;
-  --mm-text-2: #d4d4d8;
-  --mm-text-3: #a1a1aa;
+  --mm-text: var(--text-primary);
+  --mm-text-2: var(--text-secondary);
+  --mm-text-3: var(--text-muted);
 
-  /* =========================================
-     Remap legacy app tokens (scoped)
-     ========================================= */
-  --bg-main: var(--mm-bg);
-  --bg-void: #000000;
-  --bg-surface: var(--mm-card);
-  --bg-surface-2: var(--mm-card-2);
-  --bg-surface-3: var(--mm-card);
-  --bg-surface-4: var(--mm-bg);
-  --bg-surface-5: var(--mm-card-2);
-  --bg-surface-6: var(--mm-card);
-  --bg-surface-7: var(--mm-bg);
-
-  --card-bg: var(--mm-card);
-  --card-bg-2: var(--mm-card-2);
-  --card-bg-3: var(--mm-card);
-  --card-elevated: var(--mm-card-2);
-  --card-elevated-2: var(--mm-card-2);
-  --card-elevated-3: var(--mm-card-3);
-
-  --hover-bg: var(--mm-card-3);
-  --hover-bg-2: #262626;
-  --hover-bg-3: #2a2a2a;
-  --chip-bg: #232323;
-
-  --strong-line: var(--mm-border);
-  --strong-line-2: #3d3d3d;
-  --faint-line: var(--mm-border-soft);
-
-  --text-primary: var(--mm-text);
-  --text-primary-2: var(--mm-text);
-  --text-primary-3: #ffffff;
-  --text-secondary: var(--mm-text-2);
-  --text-secondary-2: var(--mm-text-2);
-  --text-muted: var(--mm-text-3);
-  --text-muted-2: var(--mm-text-3);
-  --text-accent: var(--mm-purple);
-  --text-accent-soft: #fb923c;
-
-  --border-subtle: #262626;
-  --border-strong: var(--mm-border);
-  --overlay-wash: rgba(255, 255, 255, 0.04);
-
-  --accent-purple: #f97316;
-  --accent-indigo: #fb923c;
-  --accent-pink: #ec4899;
-
-  --aurora-1: #f97316;
-  --aurora-2: #fb923c;
-  --aurora-3: #ec4899;
-  --aurora-edge-1: rgba(249, 115, 22, 0.5);
-  --aurora-edge-2: rgba(251, 146, 60, 0.28);
-  --aurora-edge-3: rgba(236, 72, 153, 0.4);
-  --glass-1: rgba(255, 255, 255, 0.04);
-  --glass-2: rgba(255, 255, 255, 0.02);
-  --glass-edge: var(--mm-border);
-  --ga-1: #fb923c;
-  --ga-2: #f97316;
-  --ga-3: #ec4899;
-  --panel-glow: rgba(249, 115, 22, 0.22);
-
-  --status-success: var(--mm-green);
-  --status-warning: #f59e0b;
-  --status-error: var(--mm-red);
-
-  background-color: var(--mm-bg);
-  color: var(--mm-text);
+  background-color: var(--background);
+  color: var(--text-primary);
 }
 
 /* =========================================
-   LIGHT THEME OVERRIDE
-   The dashboard ships dark-first. When the
-   app's light theme is active we remap the same
-   tokens so the theme toggle keeps working.
-   ========================================= */
-[data-theme="light"] .mm-dash {
-  --mm-bg: #f7f7f8;
-  --mm-card: #ffffff;
-  --mm-card-2: #f3f4f6;
-  --mm-card-3: #f9fafb;
-  --mm-border: #e4e4e7;
-  --mm-border-soft: #e4e4e7;
-
-  --mm-text: #18181b;
-  --mm-text-2: #3f3f46;
-  --mm-text-3: #71717a;
-
-  --text-primary: #18181b;
-  --text-primary-2: #18181b;
-  --text-primary-3: #18181b;
-  --text-secondary: #3f3f46;
-  --text-secondary-2: #3f3f46;
-  --text-muted: #71717a;
-  --text-muted-2: #71717a;
-  --text-accent: #f97316;
-  --text-accent-soft: #ec4899;
-
-  --border-subtle: #e4e4e7;
-  --border-strong: #d4d4d8;
-  --overlay-wash: rgba(0, 0, 0, 0.04);
-  --bg-surface: #ffffff;
-  --bg-surface-2: #f3f4f6;
-  --bg-surface-3: #ffffff;
-  --bg-surface-4: #f7f7f8;
-  --bg-surface-5: #ffffff;
-  --bg-surface-6: #ffffff;
-  --bg-surface-7: #f3f4f6;
-  --card-bg: #ffffff;
-  --card-bg-2: #ffffff;
-  --card-bg-3: #f9fafb;
-  --card-elevated: #f3f4f6;
-  --card-elevated-2: #f3f4f6;
-  --card-elevated-3: #f9fafb;
-  --chip-bg: #f3f4f6;
-  --hover-bg: #f3f4f6;
-  --hover-bg-2: #e5e7eb;
-  --hover-bg-3: #f9fafb;
-  --strong-line: #e4e4e7;
-  --strong-line-2: #d4d4d8;
-}
-
-/* =========================================
-   SURFACES
+   SURFACES & CARDS
    ========================================= */
 .mm-card {
-  background-color: var(--mm-card);
-  border: 1px solid var(--mm-border);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 16px;
+  box-shadow: var(--panel-shadow);
 }
 
 .mm-card-hover {
-  transition:
-    transform 260ms cubic-bezier(0.16, 1, 0.3, 1),
-    border-color 260ms ease,
-    box-shadow 260ms ease,
-    background-color 260ms ease;
+  transition: transform 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
 }
 
 .mm-card-hover:hover {
   transform: translateY(-2px);
-  border-color: #3d3d3d;
-  box-shadow: 0 18px 40px -24px rgba(249, 115, 22, 0.35);
-  background-color: var(--mm-card-2);
+  border-color: var(--primary);
+  box-shadow: 0 6px 24px rgba(155, 122, 247, 0.12);
+  background-color: var(--surface-hover);
 }
 
-[data-theme="light"] .mm-card-hover:hover {
-  border-color: #c9c9d2;
-  box-shadow: 0 18px 40px -26px rgba(0, 0, 0, 0.35);
-}
-
-/* Legacy `saas-card` re-skin inside the dashboard */
 .mm-dash .saas-card {
-  background-color: var(--mm-card);
-  border: 1px solid var(--mm-border);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 16px;
+  box-shadow: var(--panel-shadow);
 }
 
 .mm-dash .saas-card:hover {
-  background-color: var(--mm-card-2);
-  border-color: #3d3d3d;
-  box-shadow: 0 16px 36px -26px rgba(139, 44, 255, 0.5);
+  background-color: var(--surface-hover);
+  border-color: var(--primary);
+  box-shadow: 0 6px 24px rgba(155, 122, 247, 0.12);
 }
 
 .mm-dash .saas-card-interactive:hover {
-  border-color: rgba(168, 85, 247, 0.45);
-  background-color: var(--mm-card-2);
+  border-color: var(--primary);
+  background-color: var(--surface-hover);
 }
 
 /* =========================================
@@ -204,21 +72,14 @@
    ========================================= */
 .mm-btn {
   position: relative;
-  overflow: hidden;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border-radius: 12px;
+  border-radius: 10px;
   font-weight: 600;
   white-space: nowrap;
-  transition:
-    transform 200ms cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow 200ms ease,
-    background-color 200ms ease,
-    border-color 200ms ease,
-    color 200ms ease,
-    opacity 200ms ease;
+  transition: transform 150ms ease, box-shadow 150ms ease, background-color 150ms ease, border-color 150ms ease;
 }
 
 .mm-btn:hover:not(:disabled) {
@@ -234,509 +95,90 @@
   opacity: 0.55;
 }
 
-/* Sheen sweep */
-.mm-btn::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.22) 50%, transparent 62%);
-  transform: translateX(-130%);
-  transition: transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.mm-btn:hover:not(:disabled)::after,
-.mm-btn:focus-visible::after {
-  transform: translateX(130%);
-}
-
 .mm-btn-primary {
-  background-image: var(--mm-grad);
+  background-color: var(--primary);
   color: #ffffff;
   border: 1px solid transparent;
-  box-shadow: 0 8px 24px -10px rgba(139, 44, 255, 0.9);
 }
 
 .mm-btn-primary:hover:not(:disabled) {
-  box-shadow: 0 14px 32px -10px rgba(255, 47, 174, 0.85);
+  background-color: var(--primary-hover);
+  box-shadow: 0 4px 14px rgba(155, 122, 247, 0.3);
 }
 
 .mm-btn-ghost {
-  background-color: var(--mm-card-2);
-  border: 1px solid var(--mm-border);
-  color: var(--mm-text);
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
 }
 
 .mm-btn-ghost:hover:not(:disabled) {
-  background-color: var(--mm-card-3);
-  border-color: #3d3d3d;
+  background-color: var(--primary-subtle);
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
 .mm-btn-quiet {
   background-color: transparent;
   border: 1px solid transparent;
-  color: var(--mm-text-2);
+  color: var(--text-secondary);
 }
 
 .mm-btn-quiet:hover:not(:disabled) {
-  background-color: var(--overlay-wash);
-  color: var(--mm-text);
+  background-color: var(--surface-hover);
+  color: var(--text-primary);
 }
 
-/* Legacy button re-skin */
 .mm-dash .btn-primary,
 .mm-dash .btn-saas-primary,
 .mm-dash .btn-aurora {
-  background-image: var(--mm-grad);
+  background-color: var(--primary);
   color: #ffffff;
-  border-radius: 12px;
+  border-radius: 10px;
   border: 1px solid transparent;
 }
 
 .mm-dash .btn-primary:hover:not(:disabled),
 .mm-dash .btn-saas-primary:hover:not(:disabled),
 .mm-dash .btn-aurora:hover:not(:disabled) {
-  box-shadow: 0 12px 28px -10px rgba(255, 47, 174, 0.8);
+  background-color: var(--primary-hover);
+  box-shadow: 0 4px 14px rgba(155, 122, 247, 0.3);
 }
 
-.mm-dash .btn-secondary,
-.mm-dash .btn-saas-secondary {
-  background-color: var(--mm-card-2);
-  border: 1px solid var(--mm-border);
-  color: var(--mm-text);
-  border-radius: 12px;
-}
-
-.mm-dash .btn-secondary:hover:not(:disabled),
-.mm-dash .btn-saas-secondary:hover:not(:disabled) {
-  background-color: var(--mm-card-3);
-  border-color: #3d3d3d;
-}
-
-/* =========================================
-   NAVIGATION PILL
-   ========================================= */
-.mm-nav-pill {
+/* Sidebar Navigation Items */
+.mm-nav-link {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 5px;
-  border-radius: 16px;
-  background-color: var(--mm-card);
-  border: 1px solid var(--mm-border);
-  box-shadow: 0 14px 34px -26px rgba(0, 0, 0, 0.9);
+  gap: 0.75rem;
+  padding: 0.625rem 0.875rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all 150ms ease;
 }
 
-.mm-nav-item {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  border-radius: 12px;
-  padding: 0.625rem 1.125rem;
-  font-size: 13.5px;
+.mm-nav-link:hover {
+  color: var(--text-primary);
+  background-color: var(--surface-hover);
+}
+
+.mm-nav-link-active {
+  color: var(--primary);
+  background-color: var(--primary-soft);
   font-weight: 600;
-  color: var(--mm-text-2);
-  background-color: transparent;
-  border: 1px solid transparent;
-  white-space: nowrap;
-  transition:
-    color 220ms ease,
-    background-color 220ms ease,
-    border-color 220ms ease;
 }
 
-.mm-nav-item:hover {
-  color: var(--mm-text);
-  background-color: var(--overlay-wash);
-}
-
-.mm-nav-item-active {
-  color: #ffffff;
-  background-image: var(--mm-grad);
-  border-color: rgba(255, 255, 255, 0.22);
-  box-shadow:
-    0 6px 20px -8px rgba(139, 44, 255, 0.95),
-    inset 0 1px 0 rgba(255, 255, 255, 0.22);
-}
-
-.mm-nav-item-active:hover {
-  color: #ffffff;
-  background-image: var(--mm-grad);
-}
-
-/* Quick-action chip (secondary navigation) */
-.mm-chip-nav {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  border-radius: 9999px;
-  padding: 0.5rem 0.9rem;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--mm-text-2);
-  background-color: var(--mm-card);
-  border: 1px solid var(--mm-border);
-  white-space: nowrap;
-  transition:
-    color 200ms ease,
-    border-color 200ms ease,
-    background-color 200ms ease,
-    transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.mm-chip-nav:hover {
-  color: var(--mm-text);
-  border-color: #3d3d3d;
-  background-color: var(--mm-card-2);
-  transform: translateY(-1px);
-}
-
-.mm-chip-nav-active {
-  color: #ffffff;
-  background-image: var(--mm-grad);
-  border-color: transparent;
-  box-shadow: 0 6px 18px -8px rgba(139, 44, 255, 0.9);
-}
-
-.mm-chip-nav-active:hover {
-  color: #ffffff;
-  background-image: var(--mm-grad);
-}
-
-/* =========================================
-   ICON TILE
-   ========================================= */
-.mm-icon-tile {
-  display: grid;
-  place-items: center;
-  border-radius: 12px;
-  border: 1px solid transparent;
-  transition:
-    transform 260ms cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow 260ms ease;
-}
-
-.mm-card-hover:hover .mm-icon-tile {
-  transform: scale(1.05);
-}
-
-/* =========================================
-   HEADER
-   ========================================= */
-.mm-header-gradient {
-  background-image: var(--mm-grad);
-}
-
-.mm-logo-crown {
-  filter: drop-shadow(0 6px 16px rgba(139, 44, 255, 0.55));
-}
-
-/* =========================================
-   FORM FIELDS
-   ========================================= */
-.mm-dash .input-field {
-  background-color: var(--mm-bg);
-  border: 1px solid var(--mm-border);
-  border-radius: 12px;
-  color: var(--mm-text);
-}
-
-.mm-dash .input-field:focus {
-  border-color: var(--mm-purple);
-  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.16);
-}
-
-.mm-dash .input-field:disabled {
-  background-color: var(--mm-card-2);
-}
-
-/* Read-only value display (Profile view mode) */
-.mm-readonly {
-  display: flex;
-  align-items: center;
-  min-height: 46px;
-  border-radius: 12px;
-  padding: 0.7rem 0.9rem;
-  background-color: var(--mm-bg);
-  border: 1px solid var(--mm-border);
-  font-size: 13.5px;
-  color: var(--mm-text);
-  overflow-wrap: anywhere;
-}
-
-/* =========================================
-   BARS
-   ========================================= */
-.mm-dash .progress-bar {
-  background-color: #262626;
-  height: 6px;
-}
-
-.mm-dash .progress-bar-fill {
-  background-image: var(--mm-grad);
-  box-shadow: none;
-}
-
-[data-theme="light"] .mm-dash .progress-bar {
-  background-color: #e4e4e9;
-}
-
-/* =========================================
-   DASHED DROPZONE
-   ========================================= */
-.mm-dropzone {
-  border: 1.5px dashed var(--mm-border);
+/* Stat & KPI Cards */
+.mm-stat-card {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 16px;
-  background-color: rgba(255, 255, 255, 0.015);
-  transition:
-    border-color 220ms ease,
-    background-color 220ms ease;
+  padding: 1.25rem;
+  transition: border-color 200ms ease, box-shadow 200ms ease;
 }
 
-.mm-dropzone:hover,
-.mm-dropzone-dragging {
-  border-color: var(--mm-purple);
-  background-color: rgba(168, 85, 247, 0.06);
-}
-
-/* =========================================
-   BADGES
-   ========================================= */
-.mm-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  border-radius: 9999px;
-  padding: 0.25rem 0.6rem;
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  border: 1px solid var(--mm-border);
-  background-color: var(--mm-card-2);
-  color: var(--mm-text-2);
-}
-
-.mm-badge-grad {
-  background-image: var(--mm-grad);
-  border-color: transparent;
-  color: #ffffff;
-  box-shadow: 0 6px 18px -8px rgba(139, 44, 255, 0.9);
-}
-
-/* =========================================
-   EMPTY STATE
-   ========================================= */
-.mm-empty-icon {
-  display: grid;
-  place-items: center;
-  width: 72px;
-  height: 72px;
-  border-radius: 9999px;
-  background-image: var(--mm-grad);
-  box-shadow: 0 16px 40px -14px rgba(139, 44, 255, 0.9);
-  margin-inline: auto;
-}
-
-/* =========================================
-   HAIRLINE / SECTION LABEL
-   ========================================= */
-.mm-hairline {
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--mm-border) 20%,
-    var(--mm-border) 80%,
-    transparent
-  );
-}
-
-.mm-eyebrow {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--mm-text-3);
-}
-
-/* =========================================
-   HORIZONTAL SCROLL (mobile nav)
-   ========================================= */
-.mm-scroll-x {
-  overflow-x: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  -webkit-overflow-scrolling: touch;
-}
-
-.mm-scroll-x::-webkit-scrollbar {
-  display: none;
-}
-
-/* =========================================
-   GRADIENT TEXT
-   ========================================= */
-.mm-grad-text {
-  background-image: var(--mm-grad);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-}
-
-.mm-dash .gradient-aurora-text,
-.mm-dash .text-gradient-purple {
-  background-image: var(--mm-grad);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.mm-dash .chip-aurora {
-  background-color: rgba(168, 85, 247, 0.14);
-  color: #d8b4fe;
-}
-
-.mm-dash .aurora-card {
-  border-radius: 18px;
-  background:
-    linear-gradient(180deg, var(--mm-card-2), var(--mm-card) 65%) padding-box,
-    linear-gradient(140deg, rgba(139, 44, 255, 0.55), rgba(255, 47, 174, 0.35), var(--mm-border))
-      border-box;
-  border: 1px solid transparent;
-}
-
-.mm-dash .aurora-hairline {
-  background-image: var(--mm-grad);
-  height: 2px;
-}
-
-/* =========================================
-   SKELETON
-   ========================================= */
-@keyframes mm-shimmer {
-  0% { background-position: -420px 0; }
-  100% { background-position: 420px 0; }
-}
-
-.mm-skeleton {
-  border-radius: 10px;
-  background-color: var(--mm-card-2);
-  background-image: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.06) 50%,
-    transparent 100%
-  );
-  background-size: 420px 100%;
-  background-repeat: no-repeat;
-  animation: mm-shimmer 1.5s ease-in-out infinite;
-}
-
-[data-theme="light"] .mm-skeleton {
-  background-image: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(0, 0, 0, 0.05) 50%,
-    transparent 100%
-  );
-}
-
-/* =========================================
-   SCORE RING / METERS
-   ========================================= */
-.mm-meter {
-  height: 6px;
-  width: 100%;
-  overflow: hidden;
-  border-radius: 9999px;
-  background-color: #262626;
-}
-
-.mm-meter-fill {
-  height: 100%;
-  border-radius: 9999px;
-  background-image: var(--mm-grad);
-  transition: width 600ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-[data-theme="light"] .mm-meter {
-  background-color: #e4e4e9;
-}
-
-/* =========================================
-   ACCESSIBILITY
-   ========================================= */
-.mm-dash :focus-visible {
-  outline: 2px solid var(--mm-purple);
-  outline-offset: 2px;
-  border-radius: 8px;
-}
-
-.mm-icon-btn {
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
-  color: var(--mm-text-2);
-  background-color: var(--mm-card-2);
-  border: 1px solid var(--mm-border);
-  transition:
-    color 200ms ease,
-    background-color 200ms ease,
-    border-color 200ms ease,
-    transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.mm-icon-btn:hover {
-  color: var(--mm-text);
-  background-color: var(--mm-card-3);
-  border-color: #3d3d3d;
-  transform: translateY(-1px);
-}
-
-[data-theme="light"] .mm-icon-btn:hover {
-  border-color: #c9c9d2;
-}
-
-/* Notification dot */
-.mm-notif-dot {
-  position: absolute;
-  top: 8px;
-  right: 9px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  border-radius: 9999px;
-  background-image: var(--mm-grad);
-  color: #fff;
-  font-size: 9.5px;
-  font-weight: 800;
-  line-height: 16px;
-  text-align: center;
-  border: 2px solid var(--mm-bg);
-}
-
-/* =========================================
-   REDUCED MOTION
-   ========================================= */
-@media (prefers-reduced-motion: reduce) {
-  .mm-skeleton {
-    animation: none;
-  }
-
-  .mm-btn::after {
-    display: none;
-  }
-
-  .mm-card-hover:hover,
-  .mm-btn:hover:not(:disabled),
-  .mm-chip-nav:hover,
-  .mm-icon-btn:hover,
-  .mm-card-hover:hover .mm-icon-tile {
-    transform: none !important;
-  }
+.mm-stat-card:hover {
+  border-color: var(--primary);
+  box-shadow: 0 4px 20px rgba(155, 122, 247, 0.08);
 }

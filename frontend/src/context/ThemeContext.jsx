@@ -9,29 +9,56 @@ function getInitialTheme() {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved === "light" || saved === "dark") return saved;
   } catch {
-    // Ignore storage access issues (e.g. SSR / private mode)
+    // Ignore storage issues
   }
-  return "dark"; // Dark-first design language
+  if (
+    typeof window !== "undefined" &&
+    window.matchMedia &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches
+  ) {
+    return "dark";
+  }
+  return "light";
 }
 
 function applyTheme(theme) {
   document.documentElement.setAttribute("data-theme", theme);
-  try {
-    localStorage.setItem(STORAGE_KEY, theme);
-  } catch {
-    // Ignore storage write failures
-  }
 }
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState(getInitialTheme);
+  const [theme, setThemeState] = useState(getInitialTheme);
 
   useEffect(() => {
     applyTheme(theme);
   }, [theme]);
 
+  const setTheme = useCallback((newTheme) => {
+    setThemeState(newTheme);
+    try {
+      localStorage.setItem(STORAGE_KEY, newTheme);
+    } catch {
+      // Ignore storage write issues
+    }
+  }, []);
+
   const toggleTheme = useCallback(() => {
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  }, [setTheme]);
+
+  // Listen for system theme changes if no manual preference is saved
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = (e) => {
+      try {
+        if (!localStorage.getItem(STORAGE_KEY)) {
+          setThemeState(e.matches ? "dark" : "light");
+        }
+      } catch {
+        // Ignore
+      }
+    };
+    mediaQuery.addEventListener?.("change", handleChange);
+    return () => mediaQuery.removeEventListener?.("change", handleChange);
   }, []);
 
   const value = {

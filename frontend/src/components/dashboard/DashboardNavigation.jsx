@@ -17,14 +17,14 @@ const PRIMARY_TABS = [
    ------------------------------------------------------------------ */
 function DashboardNavigation({ activeTab, onSelect }) {
   return (
-    <div className="border-b border-[var(--mm-border)] bg-[var(--mm-bg)]">
-      <div className="mx-auto w-full max-w-[1340px] px-4 py-3.5 sm:px-6 lg:px-8">
+    <div className="border-b border-[var(--border)] bg-[var(--background)] transition-colors duration-200">
+      <div className="mx-auto w-full max-w-[1340px] px-4 py-3 sm:px-6 lg:px-8">
         {/* Primary pill */}
         <div className="flex justify-center">
           <div
             role="tablist"
             aria-label="Dashboard sections"
-            className="mm-nav-pill mm-scroll-x max-w-full"
+            className="inline-flex items-center gap-1.5 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-1.5 shadow-xs overflow-x-auto max-w-full"
           >
             {PRIMARY_TABS.map((tab) => {
               const Icon = tab.icon;
@@ -38,7 +38,12 @@ function DashboardNavigation({ activeTab, onSelect }) {
                   aria-selected={isActive}
                   aria-controls={`panel-${tab.id}`}
                   onClick={() => onSelect(tab.id)}
-                  className={cx("mm-nav-item", isActive && "mm-nav-item-active")}
+                  className={cx(
+                    "inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs sm:text-sm font-semibold transition duration-200 whitespace-nowrap",
+                    isActive
+                      ? "bg-[var(--primary)] text-white shadow-xs"
+                      : "text-[var(--text-secondary)] hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
+                  )}
                 >
                   <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
                   {tab.label}
@@ -53,4 +58,3 @@ function DashboardNavigation({ activeTab, onSelect }) {
 }
 
 export default DashboardNavigation;
-

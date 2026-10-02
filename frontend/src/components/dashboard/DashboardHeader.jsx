@@ -8,9 +8,9 @@ import {
   FileText,
   LogOut,
   Settings,
-  Trash2,
   Users,
   X,
+  MessagesSquare,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useNotifications } from "../../context/NotificationContext";
@@ -31,33 +31,25 @@ function getNotificationIcon(type) {
   switch (type) {
     case "INTERVIEW_COMPLETED":
     case "INTERVIEW_REPORT_READY":
-      return <Award className="h-4 w-4 text-[#F97316]" />;
+      return <Award className="h-4 w-4 text-[var(--primary)]" />;
     case "RESUME_ANALYSIS_COMPLETED":
-      return <FileText className="h-4 w-4 text-[#ec4899]" />;
+      return <FileText className="h-4 w-4 text-[var(--primary-hover)]" />;
     case "SUBSCRIPTION_SUCCESS":
     case "PAYMENT_SUCCESS":
-      return <CheckCircle className="h-4 w-4 text-[#10B981]" />;
+      return <CheckCircle className="h-4 w-4 text-[var(--success)]" />;
     case "PEER_INTERVIEW_INVITE":
     case "PEER_INTERVIEW_STARTED":
     case "PEER_INTERVIEW_COMPLETED":
-      return <Users className="h-4 w-4 text-[#3B82F6]" />;
+      return <Users className="h-4 w-4 text-[var(--primary)]" />;
     default:
-      return <Bell className="h-4 w-4 text-[#F97316]" />;
+      return <Bell className="h-4 w-4 text-[var(--primary)]" />;
   }
 }
 
 function AppMark() {
   return (
-    <span
-      className="mm-logo-crown relative grid h-11 w-11 shrink-0 place-items-center rounded-[13px]"
-      style={{ backgroundImage: "var(--mm-grad)" }}
-      aria-hidden="true"
-    >
-      <span className="absolute inset-0 rounded-[13px] ring-1 ring-inset ring-white/25" />
-      <svg viewBox="0 0 24 24" className="h-[21px] w-[21px] text-white" fill="currentColor">
-        <path d="M3 8.2a1 1 0 0 1 1.53-.85l2.72 1.9 3.6-5.3a1.5 1.5 0 0 1 2.5 0l3.6 5.3 2.72-1.9A1 1 0 0 1 21 8.2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8.2Z" />
-        <rect x="3" y="20" width="18" height="2.2" rx="1.1" opacity="0.75" />
-      </svg>
+    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--primary)] text-white shadow-xs">
+      <MessagesSquare className="h-5 w-5" />
     </span>
   );
 }
@@ -114,30 +106,26 @@ function DashboardHeader({ onOpenSettings }) {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-[var(--mm-border)] bg-[var(--mm-bg)]/92 backdrop-blur-xl">
-      <div
-        className="mm-header-gradient absolute inset-x-0 top-0 h-px"
-        aria-hidden="true"
-      />
-
-      <div className="mx-auto flex min-h-[90px] w-full max-w-[1340px] items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-40 border-b border-[var(--border)] bg-[var(--surface)]/90 backdrop-blur-xl">
+      <div className="mx-auto flex min-h-[72px] w-full max-w-[1340px] items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
         {/* Left: mark + title + greeting */}
         <div className="flex min-w-0 items-center gap-3.5 sm:gap-4">
           <AppMark />
           <div className="min-w-0">
-            <h1 className="font-display truncate text-[19px] font-bold leading-tight tracking-tight text-[var(--mm-text)] sm:text-[22px]">
+            <h1 className="font-display truncate text-lg font-bold leading-tight tracking-tight text-[var(--text-primary)] sm:text-xl">
               Dashboard
             </h1>
-            <p className="truncate text-[12.5px] leading-tight text-[var(--mm-text-2)] sm:text-[13px]">
+            <p className="truncate text-xs leading-tight text-[var(--text-secondary)] sm:text-sm">
               Welcome back, {userName}
             </p>
           </div>
           <span
             className={cx(
-              "mm-badge ml-1 hidden shrink-0 sm:inline-flex",
-              isPremium && "!border-transparent text-white"
+              "ml-1.5 hidden shrink-0 sm:inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold border border-[var(--border)]",
+              isPremium
+                ? "bg-[var(--primary)] text-white border-transparent"
+                : "bg-[var(--background-soft)] text-[var(--text-secondary)]"
             )}
-            style={isPremium ? { backgroundImage: "var(--mm-grad)" } : undefined}
           >
             {isPremium ? "Pro" : "Free"}
           </span>
@@ -150,7 +138,7 @@ function DashboardHeader({ onOpenSettings }) {
             <button
               type="button"
               onClick={() => setNotifOpen((v) => !v)}
-              className="mm-icon-btn relative"
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] transition duration-200 hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)] relative"
               aria-label={
                 unreadCount > 0
                   ? `Notifications, ${unreadCount} unread`
@@ -159,9 +147,9 @@ function DashboardHeader({ onOpenSettings }) {
               aria-expanded={notifOpen}
               aria-haspopup="true"
             >
-              <Bell className="h-[18px] w-[18px]" aria-hidden="true" />
+              <Bell className="h-4 w-4" aria-hidden="true" />
               {unreadCount > 0 && (
-                <span className="mm-notif-dot" aria-hidden="true">
+                <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[var(--danger)] px-1 text-[10px] font-bold text-white">
                   {unreadCount > 99 ? "99+" : unreadCount}
                 </span>
               )}
@@ -172,14 +160,14 @@ function DashboardHeader({ onOpenSettings }) {
               <div
                 role="dialog"
                 aria-label="Notifications panel"
-                className="absolute right-[-10px] sm:right-0 top-[calc(100%+10px)] z-50 w-[340px] max-w-[calc(100vw-24px)] overflow-hidden rounded-2xl border border-[var(--mm-border)] bg-[var(--mm-card)] shadow-[0_30px_70px_-30px_rgba(0,0,0,0.95)]"
+                className="absolute right-[-10px] sm:right-0 top-[calc(100%+8px)] z-50 w-[340px] max-w-[calc(100vw-24px)] overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--panel-shadow)]"
               >
                 {/* Panel Header */}
-                <div className="flex items-center justify-between border-b border-[var(--mm-border)] px-4 py-3">
+                <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <p className="text-[13px] font-bold text-[var(--mm-text)]">Notifications</p>
+                    <p className="text-xs font-bold text-[var(--text-primary)]">Notifications</p>
                     {unreadCount > 0 && (
-                      <span className="rounded-full bg-[var(--mm-purple)]/20 px-2 py-0.5 text-[10.5px] font-bold text-[var(--mm-purple)]">
+                      <span className="rounded-full bg-[var(--primary-soft)] px-2 py-0.5 text-[10.5px] font-bold text-[var(--primary)]">
                         {unreadCount} new
                       </span>
                     )}
@@ -188,7 +176,7 @@ function DashboardHeader({ onOpenSettings }) {
                     <button
                       type="button"
                       onClick={markAllAsRead}
-                      className="flex items-center gap-1 text-[11px] font-medium text-[var(--mm-purple)] hover:underline"
+                      className="flex items-center gap-1 text-xs font-medium text-[var(--primary)] hover:underline"
                     >
                       <CheckCheck className="h-3.5 w-3.5" />
                       Mark all read
@@ -198,23 +186,23 @@ function DashboardHeader({ onOpenSettings }) {
 
                 {/* Notification List / Loading / Empty */}
                 {loading && notifications.length === 0 ? (
-                  <p className="px-4 py-8 text-center text-[12.5px] text-[var(--mm-text-3)]">
+                  <p className="px-4 py-8 text-center text-xs text-[var(--text-muted)]">
                     Loading notifications...
                   </p>
                 ) : notifications.length === 0 ? (
                   <div className="px-4 py-10 text-center">
-                    <Bell className="mx-auto mb-2 h-7 w-7 text-[var(--mm-text-3)] opacity-40" />
-                    <p className="text-[12.5px] font-medium text-[var(--mm-text-2)]">No notifications yet</p>
-                    <p className="mt-1 text-[11px] text-[var(--mm-text-3)]">You'll see activity updates here</p>
+                    <Bell className="mx-auto mb-2 h-7 w-7 text-[var(--text-muted)] opacity-50" />
+                    <p className="text-xs font-medium text-[var(--text-secondary)]">No notifications yet</p>
+                    <p className="mt-1 text-[11px] text-[var(--text-muted)]">You'll see activity updates here</p>
                   </div>
                 ) : (
-                  <ul className="max-h-[340px] divide-y divide-[var(--mm-border)] overflow-y-auto">
+                  <ul className="max-h-[340px] divide-y divide-[var(--border)] overflow-y-auto">
                     {notifications.map((item) => (
                       <li
                         key={item._id}
                         className={cx(
-                          "group relative flex items-start justify-between gap-2 transition-colors hover:bg-[var(--overlay-wash)]",
-                          !item.read ? "bg-[var(--mm-purple)]/5" : ""
+                          "group relative flex items-start justify-between gap-2 transition-colors hover:bg-[var(--surface-hover)]",
+                          !item.read ? "bg-[var(--primary-subtle)]" : ""
                         )}
                       >
                         <button
@@ -222,14 +210,7 @@ function DashboardHeader({ onOpenSettings }) {
                           onClick={() => handleNotificationClick(item)}
                           className="flex flex-1 items-start gap-3 p-3.5 text-left min-w-0"
                         >
-                          <span
-                            className="mm-icon-tile mt-0.5 h-8 w-8 shrink-0 rounded-xl"
-                            style={{
-                              backgroundColor: "var(--mm-card-2)",
-                              borderColor: "var(--mm-border)",
-                            }}
-                            aria-hidden="true"
-                          >
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[var(--primary-soft)] border border-[var(--border)]" aria-hidden="true">
                             {getNotificationIcon(item.type)}
                           </span>
 
@@ -237,20 +218,20 @@ function DashboardHeader({ onOpenSettings }) {
                             <span className="flex items-center justify-between gap-2">
                               <span
                                 className={cx(
-                                  "block truncate text-[12.5px]",
-                                  !item.read ? "font-bold text-[var(--mm-text)]" : "font-semibold text-[var(--mm-text-2)]"
+                                  "block truncate text-xs",
+                                  !item.read ? "font-bold text-[var(--text-primary)]" : "font-semibold text-[var(--text-secondary)]"
                                 )}
                               >
                                 {item.title}
                               </span>
                               {!item.read && (
-                                <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--mm-purple)]" />
+                                <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--primary)]" />
                               )}
                             </span>
-                            <span className="mt-0.5 block text-[11.5px] leading-snug text-[var(--mm-text-2)] line-clamp-2">
+                            <span className="mt-0.5 block text-xs leading-snug text-[var(--text-secondary)] line-clamp-2">
                               {item.message}
                             </span>
-                            <span className="mt-1 block text-[10.5px] text-[var(--mm-text-3)]">
+                            <span className="mt-1 block text-[10px] text-[var(--text-muted)]">
                               {formatTimeAgo(item.createdAt)}
                             </span>
                           </span>
@@ -262,7 +243,7 @@ function DashboardHeader({ onOpenSettings }) {
                             e.stopPropagation();
                             deleteNotification(item._id);
                           }}
-                          className="mr-3 mt-3.5 rounded-md p-1 text-[var(--mm-text-3)] opacity-0 hover:bg-red-500/10 hover:text-red-400 group-hover:opacity-100 transition-all"
+                          className="mr-3 mt-3.5 rounded-md p-1 text-[var(--text-muted)] opacity-0 hover:bg-[var(--danger)]/10 hover:text-[var(--danger)] group-hover:opacity-100 transition-all"
                           title="Dismiss"
                         >
                           <X className="h-3.5 w-3.5" />
@@ -279,10 +260,10 @@ function DashboardHeader({ onOpenSettings }) {
           <button
             type="button"
             onClick={onOpenSettings}
-            className="mm-icon-btn"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] transition duration-200 hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
             aria-label="Settings and profile"
           >
-            <Settings className="h-[18px] w-[18px]" aria-hidden="true" />
+            <Settings className="h-4 w-4" aria-hidden="true" />
           </button>
 
           <ThemeToggle />
@@ -291,10 +272,10 @@ function DashboardHeader({ onOpenSettings }) {
           <button
             type="button"
             onClick={handleLogout}
-            className="mm-icon-btn hover:!border-[rgba(239,68,68,0.45)] hover:!text-[#F87171]"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] transition duration-200 hover:bg-[var(--danger)]/10 hover:border-[var(--danger)]/40 hover:text-[var(--danger)]"
             aria-label="Log out"
           >
-            <LogOut className="h-[18px] w-[18px]" aria-hidden="true" />
+            <LogOut className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
       </div>

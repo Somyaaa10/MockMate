@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, Check, Crown, Eye, EyeOff, Lock, Mail, User, X } from "lucide-react";
+import { ArrowLeft, Check, MessagesSquare, Eye, EyeOff, Lock, Mail, User, X } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import ThemeToggle from "../components/common/ThemeToggle";
 
@@ -75,20 +75,17 @@ function RegisterPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)] relative flex flex-col items-center justify-center px-4 py-8 sm:py-12 login-bg-glow selection:bg-orange-500/30 selection:text-white">
+    <main className="min-h-screen bg-[var(--background)] text-[var(--text-primary)] relative flex flex-col items-center justify-center px-4 py-12 transition-colors duration-200">
       <ThemeToggle className="absolute right-4 top-4 z-50 sm:right-6 sm:top-6" />
 
-      <div className="relative w-full max-w-[460px] my-auto">
-        {/* Subtle ambient orange glow behind auth card */}
-        <div className="absolute -inset-1 rounded-[22px] bg-[rgba(249,115,22,0.08)] blur-2xl pointer-events-none -z-10" />
-
+      <div className="relative w-full max-w-[440px] my-auto">
         {/* Top Header Navigation */}
-        <div className="mb-5 flex items-center justify-between">
+        <div className="mb-6 flex items-center justify-between">
           <Link to="/" className="inline-flex items-center gap-2.5 group">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--border-subtle)] bg-[var(--card-bg-3)] shadow-sm text-[#F97316] transition duration-200 group-hover:border-[rgba(249,115,22,0.35)] group-hover:shadow-[0_0_15px_rgba(249,115,22,0.2)]">
-              <Crown className="h-5 w-5" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-r from-[#6366F1] via-[#A855F7] to-[#D946EF] text-white shadow-md transition duration-200">
+              <MessagesSquare className="h-4.5 w-4.5" />
             </div>
-            <span className="text-xl font-bold tracking-tight text-[var(--text-primary)] transition group-hover:text-[var(--text-accent)]">
+            <span className="text-xl font-bold tracking-tight text-[var(--text-primary)] transition group-hover:text-[var(--primary)]">
               MockMate
             </span>
           </Link>
@@ -103,7 +100,7 @@ function RegisterPage() {
         </div>
 
         {/* Authentication Card */}
-        <div className="relative rounded-[18px] border border-[var(--border-subtle)] bg-[var(--bg-surface-4)]/92 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.35)] backdrop-blur-xl sm:p-8 transition duration-200 hover:border-[var(--border-strong)] login-fade-card">
+        <div className="relative rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[var(--panel-shadow)] sm:p-8 transition duration-200">
           {/* Heading */}
           <div className="mb-5">
             <h1 className="text-2xl font-bold tracking-tight text-[var(--text-primary)] sm:text-3xl">
@@ -134,13 +131,13 @@ function RegisterPage() {
                   placeholder="Your full name"
                   autoComplete="name"
                   disabled={loading}
-                  className={`w-full h-11 rounded-[12px] border bg-[var(--bg-surface-6)] pl-10 pr-4 text-sm text-[var(--text-primary)] outline-none transition duration-200 placeholder:text-[var(--text-muted)] hover:border-[var(--border-strong)] focus:border-[rgba(249,115,22,0.55)] focus:ring-2 focus:ring-[rgba(249,115,22,0.12)] disabled:bg-[var(--card-elevated-3)] disabled:text-[var(--text-muted)] disabled:cursor-not-allowed ${
-                    fieldErrors.fullName ? "border-[#EF4444]" : "border-[var(--border-subtle)]"
+                  className={`w-full h-11 rounded-xl border bg-[var(--surface)] pl-10 pr-4 text-sm text-[var(--text-primary)] outline-none transition duration-200 placeholder:text-[var(--text-muted)] hover:border-[var(--text-muted)] focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-soft)] disabled:bg-[var(--background-soft)] disabled:text-[var(--text-muted)] disabled:cursor-not-allowed ${
+                    fieldErrors.fullName ? "border-[var(--danger)]" : "border-[var(--border)]"
                   }`}
                 />
               </div>
               {fieldErrors.fullName && (
-                <p className="mt-1 text-xs text-[#F87171]">{fieldErrors.fullName}</p>
+                <p className="mt-1 text-xs text-[var(--danger)]">{fieldErrors.fullName}</p>
               )}
             </div>
 
@@ -162,13 +159,13 @@ function RegisterPage() {
                   placeholder="you@example.com"
                   autoComplete="email"
                   disabled={loading}
-                  className={`w-full h-11 rounded-[12px] border bg-[var(--bg-surface-6)] pl-10 pr-4 text-sm text-[var(--text-primary)] outline-none transition duration-200 placeholder:text-[var(--text-muted)] hover:border-[var(--border-strong)] focus:border-[rgba(249,115,22,0.55)] focus:ring-2 focus:ring-[rgba(249,115,22,0.12)] disabled:bg-[var(--card-elevated-3)] disabled:text-[var(--text-muted)] disabled:cursor-not-allowed ${
-                    fieldErrors.email ? "border-[#EF4444]" : "border-[var(--border-subtle)]"
+                  className={`w-full h-11 rounded-xl border bg-[var(--surface)] pl-10 pr-4 text-sm text-[var(--text-primary)] outline-none transition duration-200 placeholder:text-[var(--text-muted)] hover:border-[var(--text-muted)] focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-soft)] disabled:bg-[var(--background-soft)] disabled:text-[var(--text-muted)] disabled:cursor-not-allowed ${
+                    fieldErrors.email ? "border-[var(--danger)]" : "border-[var(--border)]"
                   }`}
                 />
               </div>
               {fieldErrors.email && (
-                <p className="mt-1 text-xs text-[#F87171]">{fieldErrors.email}</p>
+                <p className="mt-1 text-xs text-[var(--danger)]">{fieldErrors.email}</p>
               )}
             </div>
 
@@ -190,8 +187,8 @@ function RegisterPage() {
                   placeholder="Create a password"
                   autoComplete="new-password"
                   disabled={loading}
-                  className={`w-full h-11 rounded-[12px] border bg-[var(--bg-surface-6)] pl-10 pr-11 text-sm text-[var(--text-primary)] outline-none transition duration-200 placeholder:text-[var(--text-muted)] hover:border-[var(--border-strong)] focus:border-[rgba(249,115,22,0.55)] focus:ring-2 focus:ring-[rgba(249,115,22,0.12)] disabled:bg-[var(--card-elevated-3)] disabled:text-[var(--text-muted)] disabled:cursor-not-allowed ${
-                    fieldErrors.password ? "border-[#EF4444]" : "border-[var(--border-subtle)]"
+                  className={`w-full h-11 rounded-xl border bg-[var(--surface)] pl-10 pr-11 text-sm text-[var(--text-primary)] outline-none transition duration-200 placeholder:text-[var(--text-muted)] hover:border-[var(--text-muted)] focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-soft)] disabled:bg-[var(--background-soft)] disabled:text-[var(--text-muted)] disabled:cursor-not-allowed ${
+                    fieldErrors.password ? "border-[var(--danger)]" : "border-[var(--border)]"
                   }`}
                 />
                 <button
@@ -208,16 +205,16 @@ function RegisterPage() {
               {/* Password Requirement Indicator */}
               <div className="mt-1.5 flex items-center gap-1.5 text-xs">
                 {isMinLength ? (
-                  <Check className="h-3.5 w-3.5 text-[#10B981]" />
+                  <Check className="h-3.5 w-3.5 text-[var(--success)]" />
                 ) : (
                   <X className="h-3.5 w-3.5 text-[var(--text-muted)]" />
                 )}
-                <span className={isMinLength ? "text-[#10B981] font-medium" : "text-[var(--text-muted)]"}>
+                <span className={isMinLength ? "text-[var(--success)] font-medium" : "text-[var(--text-muted)]"}>
                   At least 6 characters
                 </span>
               </div>
               {fieldErrors.password && (
-                <p className="mt-0.5 text-xs text-[#F87171]">{fieldErrors.password}</p>
+                <p className="mt-0.5 text-xs text-[var(--danger)]">{fieldErrors.password}</p>
               )}
             </div>
 
@@ -239,8 +236,8 @@ function RegisterPage() {
                   placeholder="Confirm your password"
                   autoComplete="new-password"
                   disabled={loading}
-                  className={`w-full h-11 rounded-[12px] border bg-[var(--bg-surface-6)] pl-10 pr-11 text-sm text-[var(--text-primary)] outline-none transition duration-200 placeholder:text-[var(--text-muted)] hover:border-[var(--border-strong)] focus:border-[rgba(249,115,22,0.55)] focus:ring-2 focus:ring-[rgba(249,115,22,0.12)] disabled:bg-[var(--card-elevated-3)] disabled:text-[var(--text-muted)] disabled:cursor-not-allowed ${
-                    fieldErrors.confirmPassword ? "border-[#EF4444]" : "border-[var(--border-subtle)]"
+                  className={`w-full h-11 rounded-xl border bg-[var(--surface)] pl-10 pr-11 text-sm text-[var(--text-primary)] outline-none transition duration-200 placeholder:text-[var(--text-muted)] hover:border-[var(--text-muted)] focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-soft)] disabled:bg-[var(--background-soft)] disabled:text-[var(--text-muted)] disabled:cursor-not-allowed ${
+                    fieldErrors.confirmPassword ? "border-[var(--danger)]" : "border-[var(--border)]"
                   }`}
                 />
                 <button
@@ -254,20 +251,20 @@ function RegisterPage() {
                 </button>
               </div>
               {fieldErrors.confirmPassword && (
-                <p className="mt-1 text-xs text-[#F87171]">{fieldErrors.confirmPassword}</p>
+                <p className="mt-1 text-xs text-[var(--danger)]">{fieldErrors.confirmPassword}</p>
               )}
             </div>
 
             {/* Error Message */}
             {error && (
-              <div className="rounded-xl border border-[#EF4444]/25 bg-[#EF4444]/10 p-3.5 text-xs text-[#F87171]">
+              <div className="rounded-xl border border-[var(--danger)]/30 bg-[var(--danger)]/10 p-3.5 text-xs text-[var(--danger)]">
                 {error}
               </div>
             )}
 
             {/* Success Message */}
             {success && (
-              <div className="rounded-xl border border-[#10B981]/25 bg-[#10B981]/10 p-3.5 text-xs text-[#10B981]">
+              <div className="rounded-xl border border-[var(--success)]/30 bg-[var(--success)]/10 p-3.5 text-xs text-[var(--success)]">
                 {success}
               </div>
             )}
@@ -276,7 +273,7 @@ function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full h-11 rounded-xl bg-gradient-to-r from-[#F97316] to-[#EC4899] font-semibold text-sm text-white border-none shadow-md shadow-orange-900/20 transition duration-200 hover:-translate-y-[1px] hover:shadow-[0_8px_25px_rgba(236,72,153,0.22)] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 flex items-center justify-center gap-2 mt-2"
+              className="w-full h-11 rounded-xl bg-gradient-to-r from-[#6366F1] via-[#A855F7] to-[#D946EF] font-semibold text-sm text-white shadow-lg shadow-[#7C5CFF]/25 hover:opacity-95 transition duration-200 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 flex items-center justify-center gap-2 mt-2"
             >
               {loading ? (
                 <>
@@ -299,7 +296,7 @@ function RegisterPage() {
             Already have an account?{" "}
             <Link
               to="/login"
-              className="font-semibold text-[var(--text-primary)] underline transition duration-200 hover:text-[var(--text-accent)]"
+              className="font-semibold text-[var(--primary)] hover:text-[var(--primary-hover)] underline transition duration-200"
             >
               Sign in
             </Link>

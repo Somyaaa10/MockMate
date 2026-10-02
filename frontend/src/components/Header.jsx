@@ -89,17 +89,17 @@ function Header() {
 
   return (
     <header
-      className={`site-navbar w-full ${
+      className={`site-navbar w-full transition-colors duration-200 ${
         hasSurface ? "site-navbar-scrolled" : ""
       }`}
     >
       <div className="navbar-inner mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link to="/" onClick={closeMenu} className="flex items-center gap-2.5 group">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#F97316] to-[#EC4899] text-white shadow-sm transition duration-200 group-hover:scale-105">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-r from-[#6366F1] via-[#A855F7] to-[#D946EF] text-white shadow-sm transition duration-200 group-hover:scale-105">
             <MessagesSquare className="h-4.5 w-4.5" />
           </div>
-          <span className="whitespace-nowrap text-lg font-bold tracking-tight text-[var(--text-primary)] transition group-hover:text-[var(--text-accent)] sm:text-xl">
+          <span className="whitespace-nowrap text-lg font-bold tracking-tight text-[var(--text-primary)] transition group-hover:text-[var(--primary)] sm:text-xl">
             MockMate
           </span>
         </Link>
@@ -114,10 +114,10 @@ function Header() {
                 href={link.href}
                 onClick={closeMenu}
                 aria-current={isActive ? "true" : undefined}
-                className={`relative rounded-full px-3.5 py-1.5 text-sm font-medium transition duration-200 ${
+                className={`relative rounded-full px-4 py-1.5 text-sm font-medium transition duration-200 ${
                   isActive
-                    ? "text-[var(--text-accent)] bg-[var(--card-elevated-2)]"
-                    : "text-[var(--text-secondary)] hover:bg-[var(--card-bg-3)] hover:text-[var(--text-primary)]"
+                    ? "text-[var(--primary)] bg-[var(--primary-soft)] font-semibold"
+                    : "text-[var(--text-secondary)] hover:bg-[var(--primary-subtle)] hover:text-[var(--text-primary)]"
                 }`}
               >
                 {link.label}
@@ -132,7 +132,7 @@ function Header() {
           {isAuthenticated ? (
             <Link
               to="/dashboard"
-              className="rounded-full bg-gradient-to-r from-[#F97316] to-[#EC4899] px-5 py-2 text-sm font-semibold text-white shadow-sm transition duration-200 hover:opacity-95 hover:shadow-md"
+              className="rounded-full bg-gradient-to-r from-[#6366F1] via-[#A855F7] to-[#D946EF] px-5 py-2 text-sm font-semibold text-white shadow-md transition duration-200 hover:opacity-95 hover:shadow-lg"
             >
               Go to Dashboard →
             </Link>
@@ -146,7 +146,7 @@ function Header() {
               </Link>
               <Link
                 to="/register"
-                className="rounded-full bg-gradient-to-r from-[#F97316] to-[#EC4899] px-5 py-2 text-sm font-semibold text-white shadow-sm transition duration-200 hover:opacity-95 hover:shadow-md"
+                className="rounded-full bg-gradient-to-r from-[#6366F1] via-[#A855F7] to-[#D946EF] px-5 py-2 text-sm font-semibold text-white shadow-md transition duration-200 hover:opacity-95 hover:shadow-lg"
               >
                 Get Started →
               </Link>
@@ -163,7 +163,7 @@ function Header() {
             aria-label={menuOpen ? "Close menu" : "Open menu"}
             aria-expanded={menuOpen}
             aria-controls="landing-mobile-nav"
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border-subtle)] bg-[var(--card-bg-3)] text-[var(--text-secondary)] transition duration-200 hover:text-[var(--text-primary)]"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)] transition duration-200 hover:text-[var(--text-primary)]"
           >
             {menuOpen ? <X className="h-4.5 w-4.5" /> : <Menu className="h-4.5 w-4.5" />}
           </button>
@@ -174,7 +174,7 @@ function Header() {
       {menuOpen && (
         <div
           id="landing-mobile-nav"
-          className="fade-in border-t border-[var(--border-subtle)] bg-[var(--bg-main)]/95 px-4 pb-5 pt-2 backdrop-blur-xl md:hidden"
+          className="fade-in border-t border-[var(--border)] bg-[var(--surface)] px-4 pb-5 pt-2 backdrop-blur-xl md:hidden"
         >
           <nav className="flex flex-col">
             {NAV_LINKS.map((link) => {
@@ -187,25 +187,25 @@ function Header() {
                   aria-current={isActive ? "true" : undefined}
                   className={`flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium transition duration-200 ${
                     isActive
-                      ? "bg-[var(--card-bg-3)] text-[var(--text-accent)]"
-                      : "text-[var(--text-secondary)] hover:bg-[var(--card-bg-3)] hover:text-[var(--text-primary)]"
+                      ? "bg-[var(--primary-soft)] text-[var(--primary)]"
+                      : "text-[var(--text-secondary)] hover:bg-[var(--primary-subtle)] hover:text-[var(--text-primary)]"
                   }`}
                 >
                   {link.label}
                   {isActive && (
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#F97316]" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-[var(--primary)]" />
                   )}
                 </a>
               );
             })}
           </nav>
 
-          <div className="mt-2 flex flex-col gap-2.5 border-t border-[var(--border-subtle)] pt-4">
+          <div className="mt-2 flex flex-col gap-2.5 border-t border-[var(--border)] pt-4">
             {isAuthenticated ? (
               <Link
                 to="/dashboard"
                 onClick={closeMenu}
-                className="rounded-xl bg-gradient-to-r from-[#F97316] to-[#EC4899] px-5 py-2.5 text-center text-sm font-semibold text-white shadow-md shadow-orange-900/20 btn-saas-primary hover:opacity-95"
+                className="rounded-xl bg-gradient-to-r from-[#6366F1] via-[#A855F7] to-[#D946EF] px-5 py-2.5 text-center text-sm font-semibold text-white shadow-md transition hover:opacity-95"
               >
                 Go to Dashboard
               </Link>
@@ -214,14 +214,14 @@ function Header() {
                 <Link
                   to="/login"
                   onClick={closeMenu}
-                  className="rounded-lg px-3 py-2 text-center text-sm font-medium text-[var(--text-secondary)] transition duration-200 hover:bg-[var(--card-bg-3)] hover:text-[var(--text-primary)]"
+                  className="rounded-lg px-3 py-2 text-center text-sm font-medium text-[var(--text-secondary)] transition duration-200 hover:text-[var(--text-primary)]"
                 >
                   Sign In
                 </Link>
                 <Link
                   to="/register"
                   onClick={closeMenu}
-                  className="rounded-xl bg-gradient-to-r from-[#F97316] to-[#EC4899] px-5 py-2.5 text-center text-sm font-semibold text-white shadow-md shadow-orange-900/20 btn-saas-primary hover:opacity-95"
+                  className="rounded-xl bg-gradient-to-r from-[#6366F1] via-[#A855F7] to-[#D946EF] px-5 py-2.5 text-center text-sm font-semibold text-white shadow-md transition hover:opacity-95"
                 >
                   Get Started
                 </Link>
