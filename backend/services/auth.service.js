@@ -1,6 +1,14 @@
+const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const User = require("../models/user.model");
 const generateToken = require("../utils/generateToken");
+const {
+  generateAccessToken,
+  generateRefreshToken,
+  storeRefreshTokenInRedis,
+  verifyRefreshTokenInRedis,
+  removeRefreshTokenFromRedis,
+} = require("../utils/generateToken");
 const cloudinary = require("../config/cloudinary");
 const emailService = require("./email.service");
 
@@ -38,10 +46,17 @@ const loginUser = async ({ email, password }) => {
   user.lastLogin = new Date();
   await user.save();
 
-  const token = generateToken(user._id);
+  const userIdStr = user._id.toString();
+  const accessToken = generateAccessToken(userIdStr);
+  const refreshToken = generateRefreshToken(userIdStr);
+
+  // Store 7-day refresh token in Redis
+  await storeRefreshTokenInRedis(userIdStr, refreshToken);
 
   return {
-    token,
+    token: accessToken,
+    accessToken,
+    refreshToken,
     user,
   };
 };
@@ -187,6 +202,81 @@ const resetPassword = async ({ token, password, confirmPassword }) => {
   };
 };
 
+// Refresh access token using long-lived refresh token stored in Redis
+const refreshAccessToken = async (refreshTokenInput) => {
+  if (!refreshTokenInput || typeof refreshTokenInput !== "string" || !refreshTokenInput.trim()) {
+    throw new Error("Refresh token is required");
+  }
+
+  const refreshToken = refreshTokenInput.trim();
+  const secret = process.env.JWT_REFRESH_SECRET;
+
+  if (!secret) {
+    throw new Error("JWT_REFRESH_SECRET is not configured in environment variables");
+  }
+
+  let decoded;
+  try {
+    decoded = jwt.verify(refreshToken, secret);
+  } catch (err) {
+    throw new Error("Invalid or expired refresh token");
+  }
+
+  if (!decoded || !decoded.id) {
+    throw new Error("Invalid refresh token payload");
+  }
+
+  const isStoredInRedis = await verifyRefreshTokenInRedis(decoded.id, refreshToken);
+  if (!isStoredInRedis) {
+    throw new Error("Refresh token has been revoked or expired");
+  }
+
+  const user = await User.findById(decoded.id);
+  if (!user) {
+    throw new Error("User associated with this token no longer exists");
+  }
+
+  // Generate new short-lived Access Token (15 minutes)
+  const newAccessToken = generateAccessToken(user._id);
+
+  return {
+    accessToken: newAccessToken,
+    refreshToken,
+    token: newAccessToken,
+    user: {
+      id: user._id,
+      fullName: user.fullName,
+      email: user.email,
+      role: user.role,
+    },
+  };
+};
+
+// Logout user and revoke refresh token from Redis
+const logoutUser = async ({ userId, refreshToken }) => {
+  let targetUserId = userId;
+  if (!targetUserId && refreshToken && typeof refreshToken === "string") {
+    try {
+      const secret = process.env.JWT_REFRESH_SECRET;
+      if (secret) {
+        const decoded = jwt.verify(refreshToken.trim(), secret);
+        targetUserId = decoded?.id;
+      }
+    } catch {
+      // Ignored if token invalid
+    }
+  }
+
+  if (targetUserId && refreshToken) {
+    await removeRefreshTokenFromRedis(targetUserId.toString(), refreshToken.trim());
+  }
+
+  return {
+    success: true,
+    message: "Logged out successfully",
+  };
+};
+
 module.exports = {
   registerUser,
   loginUser,
@@ -194,4 +284,6 @@ module.exports = {
   uploadProfilePhoto,
   forgotPassword,
   resetPassword,
+  refreshAccessToken,
+  logoutUser,
 };

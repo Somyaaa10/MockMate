@@ -1,4 +1,6 @@
 const express = require("express");
+const { protect } = require("../middleware/auth.middleware");
+const { requireAdmin } = require("../middleware/admin.middleware");
 
 const {
   setCache,
@@ -7,6 +9,9 @@ const {
 } = require("../services/redis.service");
 
 const router = express.Router();
+
+// Protect all test-redis endpoints with authentication and admin authorization
+router.use(protect, requireAdmin);
 
 router.post("/set", async (req, res) => {
   await setCache("mockmate:test", {

@@ -7,6 +7,7 @@ const authLimiter = rateLimit({
   standardHeaders: "draft-8",
   legacyHeaders: false,
   statusCode: 429,
+  skip: () => process.env.NODE_ENV === "test",
   handler: (req, res) => {
     return res.status(429).json({
       success: false,
@@ -22,6 +23,7 @@ const aiLimiter = rateLimit({
   standardHeaders: "draft-8",
   legacyHeaders: false,
   statusCode: 429,
+  skip: () => process.env.NODE_ENV === "test",
   handler: (req, res) => {
     return res.status(429).json({
       success: false,
@@ -37,6 +39,7 @@ const forgotPasswordLimiter = rateLimit({
   standardHeaders: "draft-8",
   legacyHeaders: false,
   statusCode: 429,
+  skip: () => process.env.NODE_ENV === "test",
   handler: (req, res) => {
     return res.status(429).json({
       success: false,
@@ -52,6 +55,7 @@ const resetPasswordLimiter = rateLimit({
   standardHeaders: "draft-8",
   legacyHeaders: false,
   statusCode: 429,
+  skip: () => process.env.NODE_ENV === "test",
   handler: (req, res) => {
     return res.status(429).json({
       success: false,

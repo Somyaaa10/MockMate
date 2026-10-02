@@ -25,8 +25,24 @@ const deleteCache = async (key) => {
   return true;
 };
 
+const setNxCache = async (key, value = "1", expirySeconds = 86400) => {
+  if (!redisClient.isReady) {
+    throw new Error("Redis client is not ready");
+  }
+  const result = await redisClient.set(
+    key,
+    typeof value === "string" ? value : JSON.stringify(value),
+    {
+      NX: true,
+      EX: expirySeconds,
+    }
+  );
+  return result === "OK";
+};
+
 module.exports = {
   setCache,
   getCache,
   deleteCache,
+  setNxCache,
 };

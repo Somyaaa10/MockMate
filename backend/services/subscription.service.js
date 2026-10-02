@@ -6,11 +6,8 @@ const Payment = require("../models/payment.model");
 const User = require("../models/user.model");
 const ApiError = require("../utils/ApiError");
 
-const { setCache, getCache, deleteCache } = require("./redis.service");
+const { setCache, getCache, deleteCache, setNxCache } = require("./redis.service");
 const { createNotification } = require("./notification.service");
-
-// Track processed webhook event IDs in memory to avoid duplicate processing
-const processedWebhookEvents = new Set();
 
 // Create a Razorpay subscription or order
 const createSubscription = async (userId) => {
@@ -167,7 +164,11 @@ const verifyPayment = async ({
     throw new ApiError(400, "Payment verification details are required");
   }
 
-  const keySecret = (process.env.RAZORPAY_KEY_SECRET || "KsrDQ3NwRDeNpeTqafbq58CK").trim();
+  const keySecret = (process.env.RAZORPAY_KEY_SECRET || "").trim();
+
+  if (!keySecret) {
+    throw new ApiError(500, "Razorpay key secret is not configured in environment variables");
+  }
   let body = "";
 
   if (razorpaySubscriptionId) {
@@ -245,7 +246,7 @@ const verifyPayment = async ({
   });
 
   // Synchronize user premium status in MongoDB
-  await User.findByIdAndUpdate(userId, { isPremium: true }, { new: true });
+  await User.findByIdAndUpdate(userId, { isPremium: true }, { returnDocument: "after" });
 
   // Synchronize Redis cache
   const cacheKey = `subscription:${userId}`;
@@ -290,7 +291,7 @@ const cancelSubscription = async (userId) => {
   subscription.endedAt = new Date();
   await subscription.save();
 
-  await User.findByIdAndUpdate(userId, { isPremium: false }, { new: true });
+  await User.findByIdAndUpdate(userId, { isPremium: false }, { returnDocument: "after" });
   const cacheKey = `subscription:${userId}`;
   await setCache(cacheKey, subscription, 3600);
 
@@ -348,125 +349,142 @@ const handleRazorpayWebhook = async ({ rawBody, signature, eventPayload }) => {
     }
   }
 
-  const eventId = payload?.event_id;
-  if (eventId) {
-    if (processedWebhookEvents.has(eventId)) {
+  const eventId = payload?.event_id || payload?.id;
+  let redisWebhookKey = null;
+
+  if (eventId && typeof eventId === "string" && eventId.trim()) {
+    redisWebhookKey = `razorpay:webhook:${eventId.trim()}`;
+
+    try {
+      // Atomic SET NX EX 86400 (24-Hour TTL)
+      const acquired = await setNxCache(redisWebhookKey, "1", 86400);
+      if (!acquired) {
+        console.log(`[RazorpayWebhook] Duplicate event ignored: ${eventId}`);
+        return {
+          acknowledged: true,
+          duplicate: true,
+          message: "Webhook event already processed",
+        };
+      }
+    } catch (redisErr) {
+      console.error("❌ Redis error during webhook deduplication:", redisErr.message);
+      throw new ApiError(503, "Webhook deduplication service unavailable");
+    }
+  }
+
+  try {
+    const eventName = payload?.event;
+    const subEntity = payload?.payload?.subscription?.entity;
+    const paymentEntity = payload?.payload?.payment?.entity;
+
+    const targetSubId = subEntity?.id || paymentEntity?.subscription_id || paymentEntity?.order_id;
+
+    if (!targetSubId) {
       return {
         acknowledged: true,
-        duplicate: true,
-        message: "Webhook event already processed",
+        event: eventName,
+        message: "Webhook event acknowledged",
       };
     }
-    processedWebhookEvents.add(eventId);
-    if (processedWebhookEvents.size > 1000) {
-      const firstItem = processedWebhookEvents.values().next().value;
-      processedWebhookEvents.delete(firstItem);
+
+    const subscription = await Subscription.findOne({
+      $or: [
+        { razorpaySubscriptionId: targetSubId },
+      ],
+    });
+
+    if (!subscription) {
+      return {
+        acknowledged: true,
+        event: eventName,
+        targetSubId,
+        message: "Webhook event acknowledged (subscription not found in DB)",
+      };
     }
-  }
 
-  const eventName = payload?.event;
-  const subEntity = payload?.payload?.subscription?.entity;
-  const paymentEntity = payload?.payload?.payment?.entity;
+    const userId = subscription.user;
+    let newSubStatus = subscription.status;
+    let newIsPremium = null;
 
-  const targetSubId = subEntity?.id || paymentEntity?.subscription_id || paymentEntity?.order_id;
+    switch (eventName) {
+      case "subscription.authenticated":
+        newSubStatus = "authenticated";
+        newIsPremium = false;
+        break;
 
-  if (!targetSubId) {
+      case "subscription.activated":
+      case "subscription.charged":
+      case "subscription.resumed":
+      case "payment.captured":
+        newSubStatus = "active";
+        newIsPremium = true;
+        break;
+
+      case "subscription.completed":
+        newSubStatus = "completed";
+        newIsPremium = false;
+        break;
+
+      case "subscription.cancelled":
+        newSubStatus = "cancelled";
+        newIsPremium = false;
+        break;
+
+      case "subscription.halted":
+      case "payment.failed":
+        newSubStatus = "halted";
+        newIsPremium = false;
+        break;
+
+      default:
+        break;
+    }
+
+    subscription.status = newSubStatus;
+    if (subEntity) {
+      if (typeof subEntity.paid_count === "number") subscription.paidCount = subEntity.paid_count;
+      if (subEntity.current_start) subscription.currentStart = new Date(subEntity.current_start * 1000);
+      if (subEntity.current_end) subscription.currentEnd = new Date(subEntity.current_end * 1000);
+      if (subEntity.ended_at) subscription.endedAt = new Date(subEntity.ended_at * 1000);
+    }
+
+    await subscription.save();
+
+    if (newIsPremium !== null) {
+      await User.findByIdAndUpdate(userId, { isPremium: newIsPremium }, { returnDocument: "after" });
+    }
+
+    if (paymentEntity && paymentEntity.id) {
+      await Payment.create({
+        user: userId,
+        subscription: subscription._id,
+        razorpayPaymentId: paymentEntity.id,
+        razorpaySubscriptionId: paymentEntity.subscription_id || undefined,
+        razorpayOrderId: paymentEntity.order_id || undefined,
+        amount: paymentEntity.amount ? paymentEntity.amount / 100 : 2900,
+        currency: paymentEntity.currency || "INR",
+        status: paymentEntity.status === "captured" ? "captured" : "failed",
+      }).catch((err) => console.warn("Payment record log warning:", err.message));
+    }
+
+    const cacheKey = `subscription:${userId}`;
+    await setCache(cacheKey, subscription, 3600);
+
     return {
       acknowledged: true,
       event: eventName,
-      message: "Webhook event acknowledged",
+      status: newSubStatus,
+      isPremium: newIsPremium,
     };
+  } catch (processingError) {
+    // If webhook processing fails, remove Redis key so Razorpay can retry
+    if (redisWebhookKey) {
+      await deleteCache(redisWebhookKey).catch((delErr) =>
+        console.warn("⚠️ Failed to remove webhook key after processing error:", delErr.message)
+      );
+    }
+    throw processingError;
   }
-
-  const subscription = await Subscription.findOne({
-    $or: [
-      { razorpaySubscriptionId: targetSubId },
-    ],
-  });
-
-  if (!subscription) {
-    return {
-      acknowledged: true,
-      event: eventName,
-      targetSubId,
-      message: "Webhook event acknowledged (subscription not found in DB)",
-    };
-  }
-
-  const userId = subscription.user;
-  let newSubStatus = subscription.status;
-  let newIsPremium = null;
-
-  switch (eventName) {
-    case "subscription.authenticated":
-      newSubStatus = "authenticated";
-      newIsPremium = false;
-      break;
-
-    case "subscription.activated":
-    case "subscription.charged":
-    case "subscription.resumed":
-    case "payment.captured":
-      newSubStatus = "active";
-      newIsPremium = true;
-      break;
-
-    case "subscription.completed":
-      newSubStatus = "completed";
-      newIsPremium = false;
-      break;
-
-    case "subscription.cancelled":
-      newSubStatus = "cancelled";
-      newIsPremium = false;
-      break;
-
-    case "subscription.halted":
-    case "payment.failed":
-      newSubStatus = "halted";
-      newIsPremium = false;
-      break;
-
-    default:
-      break;
-  }
-
-  subscription.status = newSubStatus;
-  if (subEntity) {
-    if (typeof subEntity.paid_count === "number") subscription.paidCount = subEntity.paid_count;
-    if (subEntity.current_start) subscription.currentStart = new Date(subEntity.current_start * 1000);
-    if (subEntity.current_end) subscription.currentEnd = new Date(subEntity.current_end * 1000);
-    if (subEntity.ended_at) subscription.endedAt = new Date(subEntity.ended_at * 1000);
-  }
-
-  await subscription.save();
-
-  if (newIsPremium !== null) {
-    await User.findByIdAndUpdate(userId, { isPremium: newIsPremium }, { new: true });
-  }
-
-  if (paymentEntity && paymentEntity.id) {
-    await Payment.create({
-      user: userId,
-      subscription: subscription._id,
-      razorpayPaymentId: paymentEntity.id,
-      razorpaySubscriptionId: paymentEntity.subscription_id || undefined,
-      razorpayOrderId: paymentEntity.order_id || undefined,
-      amount: paymentEntity.amount ? paymentEntity.amount / 100 : 2900,
-      currency: paymentEntity.currency || "INR",
-      status: paymentEntity.status === "captured" ? "captured" : "failed",
-    }).catch((err) => console.warn("Payment record log warning:", err.message));
-  }
-
-  const cacheKey = `subscription:${userId}`;
-  await setCache(cacheKey, subscription, 3600);
-
-  return {
-    acknowledged: true,
-    event: eventName,
-    status: newSubStatus,
-    isPremium: newIsPremium,
-  };
 };
 
 module.exports = {

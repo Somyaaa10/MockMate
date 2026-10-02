@@ -120,7 +120,7 @@ const markAsRead = async (notificationId, userId) => {
     {
       $set: { read: true },
     },
-    { new: true }
+    { returnDocument: "after" }
   );
 
   if (!notification) {

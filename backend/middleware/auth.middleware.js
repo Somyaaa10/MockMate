@@ -17,7 +17,12 @@ const protect = asyncHandler(async (req, res, next) => {
     throw new ApiError(401, "Authentication required");
   }
 
-  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  let decoded;
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (jwtErr) {
+    throw new ApiError(401, "Invalid or expired authentication token");
+  }
 
   const user = await User.findById(decoded.id);
 

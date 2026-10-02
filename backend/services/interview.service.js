@@ -214,7 +214,7 @@ const startInterview = async (interviewId, userId) => {
         currentQuestionIndex: 0,
       },
     },
-    { new: true }
+    { returnDocument: "after" }
   );
 
   if (!interview) {
@@ -513,14 +513,34 @@ const getInterviewById = async (interviewId, userId) => {
   return interview;
 };
 
-const getUserInterviews = async (userId) => {
-  const interviews = await Interview.find({
-    user: userId,
-  })
-    .populate("resume", "fileName")
-    .sort({ createdAt: -1 });
+const getUserInterviews = async (userId, page = 1, limit = 10) => {
+  const pageNum = Math.max(1, parseInt(page, 10) || 1);
+  const limitNum = Math.min(50, Math.max(1, parseInt(limit, 10) || 10));
+  const skip = (pageNum - 1) * limitNum;
 
-  return interviews;
+  const [interviews, total] = await Promise.all([
+    Interview.find({ user: userId })
+      .select("-conversationHistory -questions")
+      .populate("resume", "fileName")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum),
+    Interview.countDocuments({ user: userId }),
+  ]);
+
+  const totalPages = Math.ceil(total / limitNum) || 1;
+
+  return {
+    interviews,
+    pagination: {
+      page: pageNum,
+      limit: limitNum,
+      total,
+      totalPages,
+      hasNextPage: pageNum < totalPages,
+      hasPreviousPage: pageNum > 1,
+    },
+  };
 };
 
 const getInterviewReport = async (interviewId, userId) => {

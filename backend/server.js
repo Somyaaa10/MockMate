@@ -78,9 +78,11 @@ io.on("connection", (socket) => {
 });
 
 const { logSmtpDiagnostics } = require("./services/email.service");
+const { startPeerInterviewCleanupJob } = require("./jobs/peerInterviewCleanup.job");
 
 // Start server
 server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
   logSmtpDiagnostics();
+  startPeerInterviewCleanupJob();
 });

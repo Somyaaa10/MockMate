@@ -84,11 +84,22 @@ const getInterviewById = asyncHandler(async (req, res) => {
 });
 
 const getUserInterviews = asyncHandler(async (req, res) => {
-  const interviews = await interviewService.getUserInterviews(req.user._id);
+  const { page, limit } = req.query;
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, interviews, "Interviews fetched successfully"));
+  const result = await interviewService.getUserInterviews(
+    req.user._id,
+    page,
+    limit,
+  );
+
+  const response = new ApiResponse(
+    200,
+    result.interviews,
+    "Interviews fetched successfully",
+  );
+  response.pagination = result.pagination;
+
+  return res.status(200).json(response);
 });
 
 const getInterviewReport = asyncHandler(async (req, res) => {

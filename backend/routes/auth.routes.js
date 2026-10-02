@@ -10,6 +10,8 @@ const authController = require("../controllers/auth.controller");
 // Auth routes
 router.post("/register", authLimiter, authController.register);
 router.post("/login", authLimiter, authController.login);
+router.post("/refresh", authController.refreshToken);
+router.post("/logout", authController.logout);
 
 // Password Reset routes
 router.post("/forgot-password", forgotPasswordLimiter, authController.forgotPassword);

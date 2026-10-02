@@ -125,7 +125,7 @@ const joinPeerInterview = async ({ userId, roomCode }) => {
         },
       },
     },
-    { new: true }
+    { returnDocument: "after" }
   );
 
   if (!updatedInterview) {

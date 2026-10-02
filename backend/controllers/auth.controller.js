@@ -1,5 +1,6 @@
 const asyncHandler = require("../utils/asyncHandler");
 const ApiResponse = require("../utils/ApiResponse");
+const ApiError = require("../utils/ApiError");
 const authService = require("../services/auth.service");
 
 // register controller
@@ -44,7 +45,9 @@ const login = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Login successful",
-      token: result.token,
+      token: result.accessToken,
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
       user: {
         id: result.user._id,
         fullName: result.user.fullName,
@@ -201,6 +204,51 @@ const resetPassword = asyncHandler(async (req, res) => {
   });
 });
 
+// Refresh token controller
+const refreshToken = asyncHandler(async (req, res) => {
+  const tokenStr =
+    req.body?.refreshToken ||
+    req.cookies?.refreshToken ||
+    req.headers["x-refresh-token"];
+
+  if (!tokenStr) {
+    throw new ApiError(401, "Refresh token is required");
+  }
+
+  try {
+    const result = await authService.refreshAccessToken(tokenStr);
+
+    return res.status(200).json({
+      success: true,
+      message: "Access token refreshed successfully",
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+      token: result.accessToken,
+    });
+  } catch (error) {
+    throw new ApiError(401, error.message);
+  }
+});
+
+// Logout controller
+const logout = asyncHandler(async (req, res) => {
+  const userId = req.user?._id || req.user?.id;
+  const tokenStr =
+    req.body?.refreshToken ||
+    req.cookies?.refreshToken ||
+    req.headers["x-refresh-token"];
+
+  const result = await authService.logoutUser({
+    userId,
+    refreshToken: tokenStr,
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: result.message,
+  });
+});
+
 module.exports = {
   register,
   login,
@@ -210,4 +258,6 @@ module.exports = {
   getFaceDescriptor,
   forgotPassword,
   resetPassword,
+  refreshToken,
+  logout,
 };

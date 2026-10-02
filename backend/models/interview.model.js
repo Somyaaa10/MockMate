@@ -212,4 +212,7 @@ const interviewSchema = new mongoose.Schema(
   },
 );
 
+// Compound index for user interview history queries and sorting
+interviewSchema.index({ user: 1, createdAt: -1 });
+
 module.exports = mongoose.model("Interview", interviewSchema);
