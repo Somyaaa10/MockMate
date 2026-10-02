@@ -27,7 +27,7 @@ function AIInterviewPage() {
   const candidateName = user?.fullName || user?.name || "Candidate";
 
   // Session Data
-  const [interviewData, setInterviewData] = useState(null);
+
   const [greeting, setGreeting] = useState("");
   const [question, setQuestion] = useState("");
   const [isFollowUp, setIsFollowUp] = useState(false);
@@ -35,7 +35,7 @@ function AIInterviewPage() {
   const [questionNumber, setQuestionNumber] = useState(1);
   const [totalQuestions, setTotalQuestions] = useState(5);
   const [interviewType, setInterviewType] = useState("technical");
-  const [difficulty, setDifficulty] = useState("medium");
+
   const [conversationHistory, setConversationHistory] = useState([]);
 
   // Timer State
@@ -157,7 +157,7 @@ function AIInterviewPage() {
       setQuestionNumber(navData.questionNumber || 1);
       setTotalQuestions(navData.totalQuestions || 5);
       setTargetRole(navData.targetRole || "Full Stack Developer");
-      setDifficulty(navData.difficulty || "medium");
+
       setLoadingSession(false);
 
       const greetingMsg = navData.greeting || "Welcome to your MockMate interview.";
@@ -183,9 +183,9 @@ function AIInterviewPage() {
         const data = res.data?.data;
         if (!data) throw new Error("Interview session not found");
 
-        setInterviewData(data);
+
         setInterviewType(data.interviewType || "technical");
-        setDifficulty(data.difficulty || "medium");
+
         setTargetRole(data.targetRole || "Full Stack Developer");
         setTotalQuestions(data.numberOfQuestions || data.questions?.length || 5);
         setConversationHistory(data.conversationHistory || []);
